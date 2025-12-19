@@ -1,131 +1,264 @@
-\<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Inferno Nepean Hockey</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body{margin:0;font-family:Arial;background:#0f0f0f;color:#f5f5f5}
-header{background:linear-gradient(90deg,#b30000,#ff4500);padding:20px;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
-header img{height:80px}
-nav{display:flex;gap:15px;flex-wrap:wrap}
-nav a{color:#fff;text-decoration:none;font-weight:bold;cursor:pointer}
-nav a:hover{text-decoration:underline}
-section{max-width:1100px;margin:auto;padding:40px 20px}
-.card{background:#1a1a1a;padding:20px;border-radius:12px;margin-bottom:25px}
-h2{border-left:5px solid #ff4500;padding-left:12px}
-textarea,input,button{width:100%;margin-top:10px;padding:8px;border-radius:6px;border:none}
-button{background:#ff4500;color:#000;font-weight:bold;cursor:pointer}
-button:hover{opacity:.9}
-.page{display:none}
-.page.active{display:block}
+:root{
+  --red:#b30000;
+  --dark:#0c0c0c;
+  --card:#171717;
+  --accent:#ff4500;
+  --text:#f2f2f2;
+  --muted:#b5b5b5;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family: "Segoe UI", Arial, sans-serif;
+  background:var(--dark);
+  color:var(--text);
+}
+
+/* HEADER */
+header{
+  background:linear-gradient(90deg,#8b0000,#ff4500);
+  padding:20px 40px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+}
+.brand{
+  display:flex;
+  align-items:center;
+  gap:20px;
+}
+.brand img{
+  height:85px;
+}
+.brand h1{
+  margin:0;
+  font-size:28px;
+  letter-spacing:1px;
+}
+.brand span{
+  font-size:14px;
+  color:#ffe1e1;
+}
+
+/* NAV */
+nav{
+  display:flex;
+  gap:22px;
+  flex-wrap:wrap;
+}
+nav a{
+  color:#fff;
+  text-decoration:none;
+  font-weight:600;
+  font-size:15px;
+  position:relative;
+}
+nav a::after{
+  content:"";
+  position:absolute;
+  left:0;
+  bottom:-6px;
+  width:0;
+  height:3px;
+  background:#fff;
+  transition:.25s;
+}
+nav a:hover::after{width:100%}
+
+/* LAYOUT */
+main{
+  max-width:1200px;
+  margin:auto;
+  padding:50px 20px;
+}
+section{
+  display:none;
+}
+section.active{
+  display:block;
+}
+
+/* CARDS */
+.card{
+  background:var(--card);
+  border-radius:14px;
+  padding:30px;
+  margin-bottom:30px;
+  box-shadow:0 12px 30px rgba(0,0,0,.45);
+}
+h2{
+  margin-top:0;
+  border-left:6px solid var(--accent);
+  padding-left:14px;
+  font-size:26px;
+}
+p{line-height:1.6;color:var(--muted)}
+pre{white-space:pre-wrap}
+
+/* ADMIN */
 .admin-only{display:none}
-#adminBtn{position:fixed;bottom:15px;right:15px;z-index:999}
-footer{text-align:center;padding:20px;color:#aaa}
+textarea,input,button{
+  width:100%;
+  margin-top:12px;
+  padding:12px;
+  border-radius:8px;
+  border:none;
+  font-size:14px;
+}
+textarea,input{background:#0f0f0f;color:#fff}
+button{
+  background:var(--accent);
+  color:#000;
+  font-weight:700;
+  cursor:pointer;
+}
+button:hover{opacity:.9}
+
+/* ADMIN BUTTON */
+#adminBtn{
+  position:fixed;
+  bottom:20px;
+  right:20px;
+  padding:12px 16px;
+  border-radius:50px;
+  border:none;
+  background:var(--accent);
+  font-weight:700;
+  cursor:pointer;
+  z-index:999;
+}
+
+/* FOOTER */
+footer{
+  background:#090909;
+  padding:30px;
+  text-align:center;
+  color:#777;
+  margin-top:60px;
+}
+
+/* LINKS */
+a.link{
+  color:#ff7a3d;
+  text-decoration:none;
+}
+a.link:hover{text-decoration:underline}
 </style>
 </head>
 
 <body>
 
 <header>
-  <img src="inferno-logo.png" alt="Inferno Logo">
+  <div class="brand">
+    <img src="assets/inferno-logo.png" alt="Inferno Logo">
+    <div>
+      <h1>Inferno Nepean Hockey</h1>
+      <span>Competitive • Disciplined • Relentless</span>
+    </div>
+  </div>
+
   <nav>
-    <a onclick="showPage('about')">About</a>
-    <a onclick="showPage('news')">News</a>
-    <a onclick="showPage('roster')">Roster</a>
-    <a onclick="showPage('stats')">Player Stats</a>
-    <a onclick="showPage('league')">League Standings</a>
-    <a onclick="showPage('videos')">Videos</a>
-    <a onclick="showPage('coaches')">Coaches</a>
+    <a onclick="show('about')">About</a>
+    <a onclick="show('news')">News</a>
+    <a onclick="show('roster')">Roster</a>
+    <a onclick="show('stats')">Player Stats</a>
+    <a onclick="show('league')">League Standings</a>
+    <a onclick="show('videos')">Videos</a>
+    <a onclick="show('coaches')">Coaches</a>
   </nav>
 </header>
 
-<button id="adminBtn" onclick="openAdmin()">Admin Login</button>
+<button id="adminBtn" onclick="show('admin')">Admin</button>
 
-<!-- ADMIN LOGIN -->
-<div id="adminOverlay" class="page">
-  <section>
-    <div class="card">
-      <h2>Admin Login</h2>
-      <input id="adminUser" placeholder="Username">
-      <input id="adminPass" type="password" placeholder="Password">
-      <button onclick="adminLogin()">Login</button>
-    </div>
-  </section>
-</div>
+<main>
 
-<!-- ABOUT -->
-<section id="about" class="page">
-  <h2>About Us</h2>
+<section id="admin">
   <div class="card">
+    <h2>Admin Login</h2>
+    <input id="user" placeholder="Username">
+    <input id="pass" type="password" placeholder="Password">
+    <button onclick="login()">Login</button>
+  </div>
+</section>
+
+<section id="about" class="active">
+  <div class="card">
+    <h2>About Inferno</h2>
     <p id="aboutText"></p>
     <textarea id="aboutInput" class="admin-only"></textarea>
-    <button class="admin-only" onclick="saveAbout()">Save</button>
+    <button class="admin-only" onclick="save('about')">Save</button>
   </div>
 </section>
 
-<!-- NEWS -->
-<section id="news" class="page">
-  <h2>Team News</h2>
+<section id="news">
   <div class="card">
-    <div id="newsDisplay"></div>
+    <h2>Team News</h2>
+    <p id="newsText"></p>
     <textarea id="newsInput" class="admin-only"></textarea>
-    <button class="admin-only" onclick="saveNews()">Save</button>
+    <button class="admin-only" onclick="save('news')">Save</button>
   </div>
 </section>
 
-<!-- ROSTER -->
-<section id="roster" class="page">
-  <h2>Team Roster</h2>
+<section id="roster">
   <div class="card">
-    <div id="rosterDisplay"></div>
-    <textarea id="rosterInput" class="admin-only" placeholder="Name | # | Position | Group"></textarea>
-    <button class="admin-only" onclick="saveRoster()">Save</button>
+    <h2>Team Roster</h2>
+    <pre id="rosterText"></pre>
+    <textarea id="rosterInput" class="admin-only" placeholder="Name | # | Position | Team"></textarea>
+    <button class="admin-only" onclick="save('roster')">Save</button>
   </div>
 </section>
 
-<!-- STATS -->
-<section id="stats" class="page">
-  <h2>Player Stats</h2>
+<section id="stats">
   <div class="card">
-    <pre id="statsDisplay"></pre>
+    <h2>Player Statistics</h2>
+    <pre id="statsText"></pre>
     <textarea id="statsInput" class="admin-only"></textarea>
-    <button class="admin-only" onclick="saveStats()">Save</button>
+    <button class="admin-only" onclick="save('stats')">Save</button>
   </div>
 </section>
 
-<!-- LEAGUE -->
-<section id="league" class="page">
-  <h2>League Standings</h2>
+<section id="league">
   <div class="card">
-    <pre id="leagueDisplay"></pre>
+    <h2>League Standings</h2>
+    <pre id="leagueText"></pre>
     <textarea id="leagueInput" class="admin-only"></textarea>
-    <button class="admin-only" onclick="saveLeague()">Save</button>
+    <button class="admin-only" onclick="save('league')">Save</button>
   </div>
 </section>
 
-<!-- VIDEOS -->
-<section id="videos" class="page">
-  <h2>Videos</h2>
+<section id="videos">
   <div class="card">
-    <div id="videosDisplay"></div>
-    <textarea id="videosInput" class="admin-only" placeholder="Paste links, one per line"></textarea>
+    <h2>Videos</h2>
+    <div id="videosText"></div>
+    <textarea id="videosInput" class="admin-only" placeholder="Paste video links (one per line)"></textarea>
     <button class="admin-only" onclick="saveVideos()">Save</button>
   </div>
 </section>
 
-<!-- COACHES -->
-<section id="coaches" class="page">
-  <h2>Coaches</h2>
+<section id="coaches">
   <div class="card">
-    <p id="coachesDisplay"></p>
+    <h2>Coaching Staff</h2>
+    <p id="coachesText"></p>
     <textarea id="coachesInput" class="admin-only"></textarea>
-    <button class="admin-only" onclick="saveCoaches()">Save</button>
+    <button class="admin-only" onclick="save('coaches')">Save</button>
   </div>
 </section>
 
-<footer>Inferno Nepean Hockey © 2025</footer>
+</main>
+
+<footer>
+  Inferno Nepean Hockey © 2025 • All Rights Reserved
+</footer>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
@@ -133,55 +266,45 @@ import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebase
 
 const firebaseConfig = {
   apiKey: "AIzaSyCcl7fjelmFRMSNqrNfCTSEJxJcxj7lano",
-  authDomain: "infernohockey-b39f9.firebaseapp.com",
   databaseURL: "https://infernohockey-b39f9-default-rtdb.firebaseio.com",
-  projectId: "infernohockey-b39f9",
-  appId: "1:930315123046:web:46e46a558e380e8180f0a7"
+  projectId: "infernohockey-b39f9"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-/* ADMIN */
 const ADMIN_USER="athenadmin";
 const ADMIN_PASS="AthFon32";
 
-window.openAdmin=()=>showPage("adminOverlay");
-
-window.adminLogin=()=>{
-  if(adminUser.value!==ADMIN_USER||adminPass.value!==ADMIN_PASS) return alert("Wrong login");
-  document.querySelectorAll(".admin-only").forEach(e=>e.style.display="block");
-  showPage("about");
-};
-
-/* NAV */
-window.showPage=id=>{
-  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+window.show=id=>{
+  document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
   document.getElementById(id).classList.add("active");
 };
 
-/* CONTENT BINDINGS */
-const bind=(key,el,input)=>{
-  onValue(ref(db,key),s=>el.textContent=s.val()||"");
-  window["save"+key.charAt(0).toUpperCase()+key.slice(1)]=()=>set(ref(db,key),input.value);
+window.login=()=>{
+  if(user.value!==ADMIN_USER||pass.value!==ADMIN_PASS)
+    return alert("Incorrect login");
+  document.querySelectorAll(".admin-only").forEach(e=>e.style.display="block");
+  show("about");
 };
 
-bind("about",aboutText,aboutInput);
-bind("news",newsDisplay,newsInput);
-bind("roster",rosterDisplay,rosterInput);
-bind("stats",statsDisplay,statsInput);
-bind("league",leagueDisplay,leagueInput);
-bind("coaches",coachesDisplay,coachesInput);
+const bind=(k)=>{
+  onValue(ref(db,k),s=>{
+    const v=s.val()||"";
+    document.getElementById(k+"Text").textContent=v;
+  });
+};
+["about","news","roster","stats","league","coaches"].forEach(bind);
+
+window.save=k=>set(ref(db,k),document.getElementById(k+"Input").value);
 
 onValue(ref(db,"videos"),s=>{
-  videosDisplay.innerHTML="";
+  videosText.innerHTML="";
   (s.val()||"").split("\n").forEach(v=>{
-    if(v) videosDisplay.innerHTML+=`<a href="${v}" target="_blank">${v}</a><br>`;
+    if(v) videosText.innerHTML+=`<a class="link" href="${v}" target="_blank">${v}</a><br>`;
   });
 });
 window.saveVideos=()=>set(ref(db,"videos"),videosInput.value);
-
-showPage("about");
 </script>
 
 </body>
