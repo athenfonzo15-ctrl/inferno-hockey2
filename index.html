@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+\<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -7,230 +7,181 @@
 
 <style>
 body{margin:0;font-family:Arial;background:#0f0f0f;color:#f5f5f5}
-header{background:linear-gradient(90deg,#b30000,#ff4500);padding:20px;display:flex;align-items:center;gap:20px}
+header{background:linear-gradient(90deg,#b30000,#ff4500);padding:20px;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
 header img{height:80px}
 nav{display:flex;gap:15px;flex-wrap:wrap}
-nav a{color:white;font-weight:bold;cursor:pointer;text-decoration:none}
+nav a{color:#fff;text-decoration:none;font-weight:bold;cursor:pointer}
 nav a:hover{text-decoration:underline}
-section{padding:40px 20px;max-width:1200px;margin:auto}
-.card{background:#1a1a1a;padding:20px;border-radius:14px;margin-bottom:20px}
+section{max-width:1100px;margin:auto;padding:40px 20px}
+.card{background:#1a1a1a;padding:20px;border-radius:12px;margin-bottom:25px}
 h2{border-left:5px solid #ff4500;padding-left:12px}
-button,input,textarea,select{padding:8px;border-radius:6px;border:none;margin:5px}
-button{background:#ff4500;font-weight:bold;cursor:pointer}
+textarea,input,button{width:100%;margin-top:10px;padding:8px;border-radius:6px;border:none}
+button{background:#ff4500;color:#000;font-weight:bold;cursor:pointer}
 button:hover{opacity:.9}
 .page{display:none}
 .page.active{display:block}
 .admin-only{display:none}
-table{width:100%;border-collapse:collapse}
-th,td{padding:10px;border-bottom:1px solid #333}
-th{background:#222}
-#adminBtn{position:fixed;bottom:20px;right:20px;z-index:999}
-#adminOverlay{position:fixed;inset:0;background:#000;display:flex;align-items:center;justify-content:center;z-index:1000}
+#adminBtn{position:fixed;bottom:15px;right:15px;z-index:999}
+footer{text-align:center;padding:20px;color:#aaa}
 </style>
 </head>
 
 <body>
 
-<!-- ADMIN BUTTON -->
-<button id="adminBtn" onclick="document.getElementById('adminOverlay').style.display='flex'">
-Admin Login
-</button>
-
-<!-- ADMIN LOGIN -->
-<div id="adminOverlay" style="display:none">
-<div class="card">
-<h2>Admin Login</h2>
-<input id="adminUser" placeholder="Username">
-<input id="adminPass" type="password" placeholder="Password">
-<button onclick="adminLogin()">Login</button>
-</div>
-</div>
-
 <header>
-<img id="logoImg">
-<nav>
-<a onclick="showPage('about')">About</a>
-<a onclick="showPage('news')">News</a>
-<a onclick="showPage('roster')">Roster</a>
-<a onclick="showPage('stats')">Stats</a>
-<a onclick="showPage('league')">League</a>
-<a onclick="showPage('videos')">Videos</a>
-<a onclick="showPage('coaches')">Coaches</a>
-<a onclick="showPage('adminPanel')" class="admin-only">Admin Panel</a>
-</nav>
+  <img src="inferno-logo.png" alt="Inferno Logo">
+  <nav>
+    <a onclick="showPage('about')">About</a>
+    <a onclick="showPage('news')">News</a>
+    <a onclick="showPage('roster')">Roster</a>
+    <a onclick="showPage('stats')">Player Stats</a>
+    <a onclick="showPage('league')">League Standings</a>
+    <a onclick="showPage('videos')">Videos</a>
+    <a onclick="showPage('coaches')">Coaches</a>
+  </nav>
 </header>
 
-<!-- ABOUT -->
-<section id="about" class="page active">
-<h2>About</h2>
-<div class="card">
-<textarea id="aboutInput" class="admin-only"></textarea>
-<button class="admin-only" onclick="saveAbout()">Save</button>
-<p id="aboutText"></p>
+<button id="adminBtn" onclick="openAdmin()">Admin Login</button>
+
+<!-- ADMIN LOGIN -->
+<div id="adminOverlay" class="page">
+  <section>
+    <div class="card">
+      <h2>Admin Login</h2>
+      <input id="adminUser" placeholder="Username">
+      <input id="adminPass" type="password" placeholder="Password">
+      <button onclick="adminLogin()">Login</button>
+    </div>
+  </section>
 </div>
+
+<!-- ABOUT -->
+<section id="about" class="page">
+  <h2>About Us</h2>
+  <div class="card">
+    <p id="aboutText"></p>
+    <textarea id="aboutInput" class="admin-only"></textarea>
+    <button class="admin-only" onclick="saveAbout()">Save</button>
+  </div>
 </section>
 
 <!-- NEWS -->
 <section id="news" class="page">
-<h2>News</h2>
-<div class="card admin-only">
-<input id="newsTitle" placeholder="Title">
-<textarea id="newsText"></textarea>
-<button onclick="addNews()">Post</button>
-</div>
-<div id="newsFeed"></div>
+  <h2>Team News</h2>
+  <div class="card">
+    <div id="newsDisplay"></div>
+    <textarea id="newsInput" class="admin-only"></textarea>
+    <button class="admin-only" onclick="saveNews()">Save</button>
+  </div>
 </section>
 
 <!-- ROSTER -->
 <section id="roster" class="page">
-<h2>Roster</h2>
-
-<form id="rosterForm" class="admin-only" onsubmit="addPlayer(event)">
-<input placeholder="Name" required>
-<select required>
-<option value="F">Forward</option>
-<option value="D">Defense</option>
-<option value="G">Goalie</option>
-</select>
-<select required>
-<option>Center</option>
-<option>Left Wing</option>
-<option>Right Wing</option>
-<option>Defense</option>
-<option>Goalie</option>
-</select>
-<input placeholder="#" required>
-<button>Add</button>
-</form>
-
-<table>
-<thead><tr><th>Name</th><th>#</th><th>Position</th><th>Group</th></tr></thead>
-<tbody id="rosterTable"></tbody>
-</table>
+  <h2>Team Roster</h2>
+  <div class="card">
+    <div id="rosterDisplay"></div>
+    <textarea id="rosterInput" class="admin-only" placeholder="Name | # | Position | Group"></textarea>
+    <button class="admin-only" onclick="saveRoster()">Save</button>
+  </div>
 </section>
 
 <!-- STATS -->
 <section id="stats" class="page">
-<h2>Player Stats</h2>
-<textarea id="statsInput" class="admin-only"></textarea>
-<button class="admin-only" onclick="saveStats()">Save</button>
-<pre id="statsDisplay"></pre>
+  <h2>Player Stats</h2>
+  <div class="card">
+    <pre id="statsDisplay"></pre>
+    <textarea id="statsInput" class="admin-only"></textarea>
+    <button class="admin-only" onclick="saveStats()">Save</button>
+  </div>
 </section>
 
 <!-- LEAGUE -->
 <section id="league" class="page">
-<h2>League Standings</h2>
-<input id="leagueLink" class="admin-only" placeholder="Paste standings link">
-<button class="admin-only" onclick="saveLeague()">Save</button>
-<a id="leagueCurrent" target="_blank"></a>
+  <h2>League Standings</h2>
+  <div class="card">
+    <pre id="leagueDisplay"></pre>
+    <textarea id="leagueInput" class="admin-only"></textarea>
+    <button class="admin-only" onclick="saveLeague()">Save</button>
+  </div>
 </section>
 
 <!-- VIDEOS -->
 <section id="videos" class="page">
-<h2>Videos</h2>
-<textarea id="videosInput" class="admin-only" placeholder="One link per line"></textarea>
-<button class="admin-only" onclick="saveVideos()">Save</button>
-<div id="videosList"></div>
+  <h2>Videos</h2>
+  <div class="card">
+    <div id="videosDisplay"></div>
+    <textarea id="videosInput" class="admin-only" placeholder="Paste links, one per line"></textarea>
+    <button class="admin-only" onclick="saveVideos()">Save</button>
+  </div>
 </section>
 
 <!-- COACHES -->
 <section id="coaches" class="page">
-<h2>Coaches</h2>
-<textarea id="coachesInput" class="admin-only"></textarea>
-<button class="admin-only" onclick="saveCoaches()">Save</button>
-<p id="coachesList"></p>
+  <h2>Coaches</h2>
+  <div class="card">
+    <p id="coachesDisplay"></p>
+    <textarea id="coachesInput" class="admin-only"></textarea>
+    <button class="admin-only" onclick="saveCoaches()">Save</button>
+  </div>
 </section>
 
-<!-- ADMIN PANEL -->
-<section id="adminPanel" class="page admin-only">
-<h2>Admin Panel</h2>
-<input type="file" id="logoUpload">
-<button onclick="updateLogo()">Update Logo</button>
-</section>
+<footer>Inferno Nepean Hockey © 2025</footer>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
 import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-database.js";
-import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-storage.js";
 
-const firebaseConfig={
-apiKey:"AIzaSyCcl7fjelmFRMSNqrNfCTSEJxJcxj7lano",
-authDomain:"infernohockey-b39f9.firebaseapp.com",
-databaseURL:"https://infernohockey-b39f9-default-rtdb.firebaseio.com",
-projectId:"infernohockey-b39f9",
-storageBucket:"infernohockey-b39f9.appspot.com",
-appId:"1:930315123046:web:46e46a558e380e8180f0a7"
+const firebaseConfig = {
+  apiKey: "AIzaSyCcl7fjelmFRMSNqrNfCTSEJxJcxj7lano",
+  authDomain: "infernohockey-b39f9.firebaseapp.com",
+  databaseURL: "https://infernohockey-b39f9-default-rtdb.firebaseio.com",
+  projectId: "infernohockey-b39f9",
+  appId: "1:930315123046:web:46e46a558e380e8180f0a7"
 };
 
-const app=initializeApp(firebaseConfig);
-const db=getDatabase(app);
-const storage=getStorage(app);
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
+/* ADMIN */
 const ADMIN_USER="athenadmin";
 const ADMIN_PASS="AthFon32";
 
+window.openAdmin=()=>showPage("adminOverlay");
+
 window.adminLogin=()=>{
-if(adminUser.value!==ADMIN_USER||adminPass.value!==ADMIN_PASS) return alert("Wrong login");
-document.querySelectorAll(".admin-only").forEach(e=>e.style.display="block");
-adminOverlay.style.display="none";
+  if(adminUser.value!==ADMIN_USER||adminPass.value!==ADMIN_PASS) return alert("Wrong login");
+  document.querySelectorAll(".admin-only").forEach(e=>e.style.display="block");
+  showPage("about");
 };
 
+/* NAV */
 window.showPage=id=>{
-document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
-document.getElementById(id).classList.add("active");
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
 };
 
-const logoImg=document.getElementById("logoImg");
-onValue(ref(db,"logo"),s=>logoImg.src=s.val());
-
-window.updateLogo=async()=>{
-const file=logoUpload.files[0];
-const r=sRef(storage,"logo.png");
-await uploadBytes(r,file);
-set(ref(db,"logo"),await getDownloadURL(r));
+/* CONTENT BINDINGS */
+const bind=(key,el,input)=>{
+  onValue(ref(db,key),s=>el.textContent=s.val()||"");
+  window["save"+key.charAt(0).toUpperCase()+key.slice(1)]=()=>set(ref(db,key),input.value);
 };
 
-window.saveAbout=()=>set(ref(db,"about"),aboutInput.value);
-onValue(ref(db,"about"),s=>aboutText.textContent=s.val()||"");
+bind("about",aboutText,aboutInput);
+bind("news",newsDisplay,newsInput);
+bind("roster",rosterDisplay,rosterInput);
+bind("stats",statsDisplay,statsInput);
+bind("league",leagueDisplay,leagueInput);
+bind("coaches",coachesDisplay,coachesInput);
 
-window.addNews=()=>set(ref(db,"news/"+Date.now()),{title:newsTitle.value,text:newsText.value});
-onValue(ref(db,"news"),s=>{
-newsFeed.innerHTML="";
-s.forEach(c=>newsFeed.innerHTML+=`<div class="card"><h3>${c.val().title}</h3><p>${c.val().text}</p></div>`);
-});
-
-window.addPlayer=e=>{
-e.preventDefault();
-const f=e.target;
-set(ref(db,"roster/"+Date.now()),{name:f[0].value,group:f[1].value,position:f[2].value,num:f[3].value});
-f.reset();
-};
-
-onValue(ref(db,"roster"),s=>{
-rosterTable.innerHTML="";
-s.forEach(c=>{
-const p=c.val();
-rosterTable.innerHTML+=`<tr><td>${p.name}</td><td>${p.num}</td><td>${p.position}</td><td>${p.group}</td></tr>`;
-});
-});
-
-window.saveStats=()=>set(ref(db,"stats"),statsInput.value);
-onValue(ref(db,"stats"),s=>statsDisplay.textContent=s.val()||"");
-
-window.saveLeague=()=>set(ref(db,"league"),leagueLink.value);
-onValue(ref(db,"league"),s=>{
-leagueCurrent.href=s.val()||"#";
-leagueCurrent.textContent=s.val()||"";
-});
-
-window.saveVideos=()=>set(ref(db,"videos"),videosInput.value.split("\n"));
 onValue(ref(db,"videos"),s=>{
-videosList.innerHTML="";
-(s.val()||[]).forEach(v=>videosList.innerHTML+=`<a href="${v}" target="_blank">${v}</a><br>`);
+  videosDisplay.innerHTML="";
+  (s.val()||"").split("\n").forEach(v=>{
+    if(v) videosDisplay.innerHTML+=`<a href="${v}" target="_blank">${v}</a><br>`;
+  });
 });
+window.saveVideos=()=>set(ref(db,"videos"),videosInput.value);
 
-window.saveCoaches=()=>set(ref(db,"coaches"),coachesInput.value);
-onValue(ref(db,"coaches"),s=>coachesList.textContent=s.val()||"");
+showPage("about");
 </script>
 
 </body>
