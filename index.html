@@ -5,6 +5,9 @@
 <title>Inferno Nepean Hockey</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<!-- Favicon -->
+<link rel="icon" href="assets/inferno-logo.png" type="image/png">
+
 <style>
 :root{
   --dark:#0c0c0c;
@@ -21,7 +24,6 @@ body{
   color:var(--text);
 }
 
-/* HEADER */
 header{
   background:linear-gradient(90deg,#8b0000,#ff4500);
   padding:18px 40px;
@@ -32,8 +34,6 @@ header{
 .brand{display:flex;gap:18px;align-items:center}
 .brand img{height:70px}
 .brand span{font-size:14px;color:#ffe1e1}
-
-/* NAV */
 nav{display:flex;gap:18px;align-items:center}
 nav a{
   color:#fff;
@@ -55,12 +55,10 @@ nav a.logout{
   display:none;
 }
 
-/* LAYOUT */
 main{max-width:1200px;margin:auto;padding:40px 20px}
 section{display:none}
 section.active{display:block}
 
-/* CARDS */
 .card{
   background:var(--card);
   padding:30px;
@@ -73,7 +71,6 @@ h2{
   padding-left:14px;
 }
 
-/* TABLES */
 table{
   width:100%;
   border-collapse:collapse;
@@ -89,7 +86,6 @@ th{
   color:#ff4500;
 }
 
-/* ADMIN */
 .admin-only{display:none}
 textarea,input,button{
   width:100%;
@@ -105,13 +101,20 @@ button{
   cursor:pointer;
 }
 
-/* RECORD */
 .team-record{text-align:center;margin-bottom:30px}
 .record-score{font-size:36px;color:#ff0000;font-weight:900}
-
-/* LINKS */
 a.link{color:#ff7a3d;text-decoration:none}
 a.link:hover{text-decoration:underline}
+
+.action-btn{
+  padding:3px 6px;
+  margin:0 2px;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+}
+.edit-btn{background:orange;color:#000}
+.delete-btn{background:red;color:#fff}
 </style>
 </head>
 
@@ -143,8 +146,9 @@ a.link:hover{text-decoration:underline}
 <section id="news" class="active">
   <div class="card">
     <h2>Team News</h2>
-    <pre id="newsText"></pre>
-    <textarea id="newsInput" class="admin-only"></textarea>
+    <div id="newsText"></div>
+    <input type="file" id="newsFile" class="admin-only" accept="image/*,video/*">
+    <textarea id="newsInput" class="admin-only" placeholder="Add news text..."></textarea>
     <button class="admin-only" onclick="save('news')">Save</button>
   </div>
 </section>
@@ -154,7 +158,8 @@ a.link:hover{text-decoration:underline}
   <div class="card">
     <h2>Clips</h2>
     <div id="clipsText"></div>
-    <textarea id="clipsInput" class="admin-only"></textarea>
+    <input type="file" id="clipsFile" class="admin-only" accept="video/*">
+    <textarea id="clipsInput" class="admin-only" placeholder="Add clip URL..."></textarea>
     <button class="admin-only" onclick="save('clips')">Save</button>
   </div>
 </section>
@@ -163,21 +168,14 @@ a.link:hover{text-decoration:underline}
 <section id="roster">
   <div class="card">
     <h2>Player Roster</h2>
-
     <table>
       <thead>
-        <tr>
-          <th>Name</th>
-          <th>Position</th>
-          <th>#</th>
-        </tr>
+        <tr><th>Name</th><th>Position</th><th>#</th><th>Actions</th></tr>
       </thead>
       <tbody id="rosterBody"></tbody>
     </table>
-
-    <textarea id="rosterInput" class="admin-only"
-      placeholder="Name | Position | Number"></textarea>
-    <button class="admin-only" onclick="save('roster')">Save Roster</button>
+    <textarea id="rosterInput" class="admin-only" placeholder="Name | Position | Number"></textarea>
+    <button class="admin-only" onclick="save('roster')">Add Player</button>
   </div>
 </section>
 
@@ -190,19 +188,15 @@ a.link:hover{text-decoration:underline}
       <textarea id="recordInput" class="admin-only"></textarea>
       <button class="admin-only" onclick="save('record')">Save Record</button>
     </div>
-
     <h2>League Standings</h2>
     <table>
       <thead>
-        <tr>
-          <th>Team</th><th>GP</th><th>W</th><th>L</th><th>T</th><th>PTS</th>
-        </tr>
+        <tr><th>Team</th><th>GP</th><th>W</th><th>L</th><th>T</th><th>PTS</th><th>Actions</th></tr>
       </thead>
       <tbody id="leagueBody"></tbody>
     </table>
-
-    <textarea id="leagueInput" class="admin-only"></textarea>
-    <button class="admin-only" onclick="save('league')">Save Standings</button>
+    <textarea id="leagueInput" class="admin-only" placeholder="Team | GP | W | L | T | PTS"></textarea>
+    <button class="admin-only" onclick="save('league')">Add League Entry</button>
   </div>
 </section>
 
@@ -210,20 +204,16 @@ a.link:hover{text-decoration:underline}
 <section id="coaches">
   <div class="card">
     <h2>Coaching Staff</h2>
-
     <table>
-      <thead>
-        <tr><th>Name</th><th>Role</th></tr>
-      </thead>
+      <thead><tr><th>Name</th><th>Role</th><th>Actions</th></tr></thead>
       <tbody id="coachesBody"></tbody>
     </table>
-
-    <textarea id="coachesInput" class="admin-only"></textarea>
-    <button class="admin-only" onclick="save('coaches')">Save Coaches</button>
+    <textarea id="coachesInput" class="admin-only" placeholder="Name | Role"></textarea>
+    <button class="admin-only" onclick="save('coaches')">Add Coach</button>
   </div>
 </section>
 
-<!-- ADMIN -->
+<!-- ADMIN LOGIN -->
 <section id="admin">
   <div class="card">
     <h2>Admin Login</h2>
@@ -237,14 +227,14 @@ a.link:hover{text-decoration:underline}
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
-import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-database.js";
+import { getDatabase, ref, set, onValue, remove, update } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-database.js";
 
-const app=initializeApp({
+const app = initializeApp({
   apiKey:"AIzaSyCcl7fjelmFRMSNqrNfCTSEJxJcxj7lano",
   databaseURL:"https://infernohockey-b39f9-default-rtdb.firebaseio.com",
   projectId:"infernohockey-b39f9"
 });
-const db=getDatabase(app);
+const db = getDatabase(app);
 
 const ADMIN_USER="athenadmin";
 const ADMIN_PASS="AthFon32";
@@ -268,35 +258,70 @@ window.logout=()=>{
   show("news");
 };
 
-/* RENDER TABLES */
-const renderTable=(key,bodyId,cols)=>{
-  onValue(ref(db,key),s=>{
-    const body=document.getElementById(bodyId);
-    body.innerHTML="";
-    (s.val()||"").split("\n").forEach(row=>{
-      const c=row.split("|").map(x=>x.trim());
-      if(c.length===cols)
-        body.innerHTML+=`<tr>${c.map(v=>`<td>${v}</td>`).join("")}</tr>`;
+/* RENDER TABLE WITH EDIT/DELETE */
+function renderTable(key, bodyId, cols){
+  onValue(ref(db,key), snap=>{
+    const body = document.getElementById(bodyId);
+    body.innerHTML = "";
+    const data = snap.val() || {};
+    Object.keys(data).forEach(id=>{
+      const row = data[id].split("|").map(x=>x.trim());
+      if(row.length===cols){
+        const tr = document.createElement("tr");
+        tr.innerHTML = row.map(v=>`<td>${v}</td>`).join("");
+        if(cols>0){
+          tr.innerHTML += `<td>
+            <button class="action-btn edit-btn" onclick="editRow('${key}','${id}','${cols}')">Edit</button>
+            <button class="action-btn delete-btn" onclick="deleteRow('${key}','${id}')">Delete</button>
+          </td>`;
+        }
+        body.appendChild(tr);
+      }
     });
   });
+}
+
+window.editRow = (key,id,cols)=>{
+  const dataRef = ref(db, key+"/"+id);
+  onValue(dataRef, snap=>{
+    const value = snap.val();
+    const input = document.getElementById(key+"Input");
+    input.value = value;
+    if(key==="roster") input.placeholder="Name | Position | Number";
+    if(key==="league") input.placeholder="Team | GP | W | L | T | PTS";
+    if(key==="coaches") input.placeholder="Name | Role";
+  });
+};
+
+window.deleteRow = (key,id)=>{
+  if(confirm("Delete this entry?")) remove(ref(db,key+"/"+id));
+};
+
+/* SAVE OR ADD NEW */
+window.save = (key)=>{
+  const input = document.getElementById(key+"Input");
+  if(!input.value.trim()) return;
+  const dataRef = ref(db,key);
+  const newId = Date.now().toString();
+  set(ref(db,key+"/"+newId), input.value);
+  input.value="";
 };
 
 renderTable("roster","rosterBody",3);
 renderTable("league","leagueBody",6);
 renderTable("coaches","coachesBody",2);
 
-onValue(ref(db,"record"),s=>{
-  recordText.textContent=s.val()||"0 - 0 - 0";
-});
-onValue(ref(db,"news"),s=>newsText.textContent=s.val()||"");
-onValue(ref(db,"clips"),s=>{
-  clipsText.innerHTML="";
-  (s.val()||"").split("\n").forEach(v=>{
-    if(v) clipsText.innerHTML+=`<a class="link" href="${v}" target="_blank">${v}</a><br>`;
+onValue(ref(db,"record"), s=> recordText.textContent = s.val() || "0 - 0 - 0");
+onValue(ref(db,"news"), s=> newsText.innerHTML = s.val() || "");
+onValue(ref(db,"clips"), s=>{
+  clipsText.innerHTML = "";
+  const clips = s.val() || {};
+  Object.values(clips).forEach(v=>{
+    if(v.endsWith(".mp4") || v.includes("youtube"))
+      clipsText.innerHTML += `<a class="link" href="${v}" target="_blank">${v}</a><br>`;
+    else clipsText.innerHTML += `<p>${v}</p>`;
   });
 });
-
-window.save=k=>set(ref(db,k),document.getElementById(k+"Input").value);
 </script>
 
 </body>
