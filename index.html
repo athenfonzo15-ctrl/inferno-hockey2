@@ -27,17 +27,12 @@ header{
   background:linear-gradient(90deg,#8b0000,#ff4500);
   padding:20px 40px;
   display:flex;
-  align-items:center;
   justify-content:space-between;
+  align-items:center;
   flex-wrap:wrap;
 }
-.brand{
-  display:flex;
-  align-items:center;
-  gap:20px;
-}
+.brand{display:flex;align-items:center;gap:20px}
 .brand img{height:80px}
-.brand h1{margin:0}
 .brand span{font-size:14px;color:#ffe1e1}
 
 /* NAV */
@@ -47,19 +42,7 @@ nav a{
   font-weight:600;
   cursor:pointer;
   text-decoration:none;
-  position:relative;
 }
-nav a::after{
-  content:"";
-  position:absolute;
-  left:0;
-  bottom:-5px;
-  width:0;
-  height:3px;
-  background:#fff;
-  transition:.3s;
-}
-nav a:hover::after{width:100%}
 
 /* LAYOUT */
 main{max-width:1200px;margin:auto;padding:50px 20px}
@@ -72,15 +55,29 @@ section.active{display:block}
   padding:30px;
   border-radius:14px;
   box-shadow:0 12px 30px rgba(0,0,0,.45);
-  margin-bottom:30px;
 }
 h2{
   margin-top:0;
   border-left:6px solid var(--accent);
   padding-left:14px;
 }
-p{color:var(--muted);line-height:1.6}
-pre{white-space:pre-wrap}
+
+/* TABLES */
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:20px;
+}
+th,td{
+  border:1px solid #2a2a2a;
+  padding:10px;
+  text-align:center;
+}
+th{
+  background:#111;
+  color:#ff4500;
+}
+td{color:#ddd}
 
 /* ADMIN */
 .admin-only{display:none}
@@ -97,16 +94,14 @@ button{
   font-weight:700;
   cursor:pointer;
 }
-button:hover{opacity:.9}
 
 /* TEAM RECORD */
-.team-record{text-align:center}
+.team-record{text-align:center;margin-bottom:30px}
 .record-header{
   display:flex;
   align-items:center;
   justify-content:center;
   gap:14px;
-  margin-bottom:12px;
 }
 .record-header .bar{
   flex:1;
@@ -115,24 +110,17 @@ button:hover{opacity:.9}
   background:#000;
 }
 .record-title{
-  font-weight:900;
   color:#ff0000;
+  font-weight:900;
   letter-spacing:2px;
 }
 .record-score{
   font-size:36px;
-  font-weight:900;
   color:#ff0000;
+  font-weight:900;
 }
-.record-season{
-  font-size:14px;
-  color:#777;
-}
-.record-team{
-  font-size:14px;
-  color:#aaa;
-  margin-bottom:12px;
-}
+.record-season{color:#777}
+.record-team{color:#aaa}
 
 /* ADMIN BUTTON */
 #adminBtn{
@@ -146,17 +134,6 @@ button:hover{opacity:.9}
   font-weight:700;
   cursor:pointer;
 }
-
-/* FOOTER */
-footer{
-  background:#090909;
-  padding:30px;
-  text-align:center;
-  color:#777;
-}
-
-a.link{color:#ff7a3d;text-decoration:none}
-a.link:hover{text-decoration:underline}
 </style>
 </head>
 
@@ -172,12 +149,9 @@ a.link:hover{text-decoration:underline}
   </div>
 
   <nav>
-    <a onclick="show('about')">About</a>
-    <a onclick="show('news')">News</a>
     <a onclick="show('roster')">Roster</a>
     <a onclick="show('league')">League</a>
     <a onclick="show('coaches')">Coaches</a>
-    <a onclick="show('videos')">Videos</a>
   </nav>
 </header>
 
@@ -187,41 +161,31 @@ a.link:hover{text-decoration:underline}
 
 <section id="admin">
   <div class="card">
-    <h2>Admin Login</h2>
     <input id="user" placeholder="Username">
     <input id="pass" type="password" placeholder="Password">
     <button onclick="login()">Login</button>
   </div>
 </section>
 
-<section id="about" class="active">
-  <div class="card">
-    <h2>About</h2>
-    <p id="aboutText"></p>
-    <textarea id="aboutInput" class="admin-only"></textarea>
-    <button class="admin-only" onclick="save('about')">Save</button>
-  </div>
-</section>
-
-<section id="news">
-  <div class="card">
-    <h2>Team News</h2>
-    <p id="newsText"></p>
-    <textarea id="newsInput" class="admin-only"></textarea>
-    <button class="admin-only" onclick="save('news')">Save</button>
-  </div>
-</section>
-
-<section id="roster">
+<!-- ROSTER -->
+<section id="roster" class="active">
   <div class="card">
     <h2>Player Roster</h2>
-    <pre id="rosterText"></pre>
+
+    <table id="rosterTable">
+      <thead>
+        <tr><th>Name</th><th>Position</th><th>#</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
     <textarea id="rosterInput" class="admin-only"
-      placeholder="Name | # | Position"></textarea>
+      placeholder="Name | Position | Number"></textarea>
     <button class="admin-only" onclick="save('roster')">Save</button>
   </div>
 </section>
 
+<!-- LEAGUE -->
 <section id="league">
   <div class="card">
 
@@ -231,20 +195,26 @@ a.link:hover{text-decoration:underline}
         <span class="record-title">TEAM RECORD</span>
         <span class="bar"></span>
       </div>
-
       <div class="record-score" id="recordText">0 - 0 - 0</div>
       <div class="record-season">2025–2026</div>
       <div class="record-team">U15 HB Team I</div>
 
       <textarea id="recordInput" class="admin-only"
-        placeholder="Wins - Losses - Ties (example: 7 - 0 - 2)"></textarea>
+        placeholder="Wins - Losses - Ties"></textarea>
       <button class="admin-only" onclick="save('record')">Save Record</button>
     </div>
 
-    <hr style="margin:30px 0;border-color:#222">
-
     <h2>League Standings</h2>
-    <pre id="leagueText"></pre>
+
+    <table id="leagueTable">
+      <thead>
+        <tr>
+          <th>Team</th><th>GP</th><th>W</th><th>L</th><th>T</th><th>PTS</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
     <textarea id="leagueInput" class="admin-only"
       placeholder="Team | GP | W | L | T | PTS"></textarea>
     <button class="admin-only" onclick="save('league')">Save Standings</button>
@@ -252,42 +222,35 @@ a.link:hover{text-decoration:underline}
   </div>
 </section>
 
+<!-- COACHES -->
 <section id="coaches">
   <div class="card">
     <h2>Coaching Staff</h2>
-    <pre id="coachesText"></pre>
-    <textarea id="coachesInput" class="admin-only"></textarea>
-    <button class="admin-only" onclick="save('coaches')">Save</button>
-  </div>
-</section>
 
-<section id="videos">
-  <div class="card">
-    <h2>Videos</h2>
-    <div id="videosText"></div>
-    <textarea id="videosInput" class="admin-only"
-      placeholder="Paste video links (one per line)"></textarea>
-    <button class="admin-only" onclick="saveVideos()">Save</button>
+    <table id="coachesTable">
+      <thead>
+        <tr><th>Name</th><th>Role</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <textarea id="coachesInput" class="admin-only"
+      placeholder="Name | Role"></textarea>
+    <button class="admin-only" onclick="save('coaches')">Save</button>
   </div>
 </section>
 
 </main>
 
-<footer>
-  Inferno Nepean Hockey © 2025
-</footer>
-
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
 import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-database.js";
 
-const firebaseConfig={
+const app=initializeApp({
   apiKey:"AIzaSyCcl7fjelmFRMSNqrNfCTSEJxJcxj7lano",
   databaseURL:"https://infernohockey-b39f9-default-rtdb.firebaseio.com",
   projectId:"infernohockey-b39f9"
-};
-
-const app=initializeApp(firebaseConfig);
+});
 const db=getDatabase(app);
 
 const ADMIN_USER="athenadmin";
@@ -299,30 +262,32 @@ window.show=id=>{
 };
 
 window.login=()=>{
-  if(user.value!==ADMIN_USER||pass.value!==ADMIN_PASS)
-    return alert("Incorrect login");
+  if(user.value!==ADMIN_USER||pass.value!==ADMIN_PASS) return alert("Wrong login");
   document.querySelectorAll(".admin-only").forEach(e=>e.style.display="block");
-  show("about");
 };
 
-const bind=k=>{
-  onValue(ref(db,k),s=>{
-    document.getElementById(k+"Text").textContent=s.val()||"";
+const render=(id,cols)=>{
+  onValue(ref(db,id),s=>{
+    const body=document.querySelector(`#${id}Table tbody`);
+    body.innerHTML="";
+    (s.val()||"").split("\n").forEach(r=>{
+      const c=r.split("|").map(x=>x.trim());
+      if(c.length===cols){
+        body.innerHTML+=`<tr>${c.map(v=>`<td>${v}</td>`).join("")}</tr>`;
+      }
+    });
   });
 };
 
-["about","news","roster","league","coaches","record"].forEach(bind);
+render("roster",3);
+render("league",6);
+render("coaches",2);
+
+onValue(ref(db,"record"),s=>{
+  recordText.textContent=s.val()||"0 - 0 - 0";
+});
 
 window.save=k=>set(ref(db,k),document.getElementById(k+"Input").value);
-
-onValue(ref(db,"videos"),s=>{
-  videosText.innerHTML="";
-  (s.val()||"").split("\n").forEach(v=>{
-    if(v) videosText.innerHTML+=
-      `<a class="link" href="${v}" target="_blank">${v}</a><br>`;
-  });
-});
-window.saveVideos=()=>set(ref(db,"videos"),videosInput.value);
 </script>
 
 </body>
