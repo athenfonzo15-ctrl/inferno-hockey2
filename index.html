@@ -55,6 +55,7 @@ section.active{display:block}
   padding:30px;
   border-radius:14px;
   box-shadow:0 12px 30px rgba(0,0,0,.45);
+  margin-bottom:30px;
 }
 h2{
   margin-top:0;
@@ -73,10 +74,7 @@ th,td{
   padding:10px;
   text-align:center;
 }
-th{
-  background:#111;
-  color:#ff4500;
-}
+th{background:#111;color:#ff4500}
 td{color:#ddd}
 
 /* ADMIN */
@@ -109,18 +107,14 @@ button{
   height:6px;
   background:#000;
 }
-.record-title{
-  color:#ff0000;
-  font-weight:900;
-  letter-spacing:2px;
-}
-.record-score{
-  font-size:36px;
-  color:#ff0000;
-  font-weight:900;
-}
+.record-title{color:#ff0000;font-weight:900;letter-spacing:2px}
+.record-score{font-size:36px;color:#ff0000;font-weight:900}
 .record-season{color:#777}
 .record-team{color:#aaa}
+
+/* LINKS */
+a.link{color:#ff7a3d;text-decoration:none}
+a.link:hover{text-decoration:underline}
 
 /* ADMIN BUTTON */
 #adminBtn{
@@ -149,9 +143,11 @@ button{
   </div>
 
   <nav>
+    <a onclick="show('news')">News</a>
     <a onclick="show('roster')">Roster</a>
     <a onclick="show('league')">League</a>
     <a onclick="show('coaches')">Coaches</a>
+    <a onclick="show('clips')">Clips</a>
   </nav>
 </header>
 
@@ -167,21 +163,30 @@ button{
   </div>
 </section>
 
+<!-- NEWS -->
+<section id="news" class="active">
+  <div class="card">
+    <h2>Team News</h2>
+    <pre id="newsText"></pre>
+    <textarea id="newsInput" class="admin-only"
+      placeholder="One news item per line"></textarea>
+    <button class="admin-only" onclick="save('news')">Save News</button>
+  </div>
+</section>
+
 <!-- ROSTER -->
-<section id="roster" class="active">
+<section id="roster">
   <div class="card">
     <h2>Player Roster</h2>
-
     <table id="rosterTable">
       <thead>
         <tr><th>Name</th><th>Position</th><th>#</th></tr>
       </thead>
       <tbody></tbody>
     </table>
-
     <textarea id="rosterInput" class="admin-only"
       placeholder="Name | Position | Number"></textarea>
-    <button class="admin-only" onclick="save('roster')">Save</button>
+    <button class="admin-only" onclick="save('roster')">Save Roster</button>
   </div>
 </section>
 
@@ -205,7 +210,6 @@ button{
     </div>
 
     <h2>League Standings</h2>
-
     <table id="leagueTable">
       <thead>
         <tr>
@@ -226,7 +230,6 @@ button{
 <section id="coaches">
   <div class="card">
     <h2>Coaching Staff</h2>
-
     <table id="coachesTable">
       <thead>
         <tr><th>Name</th><th>Role</th></tr>
@@ -236,7 +239,18 @@ button{
 
     <textarea id="coachesInput" class="admin-only"
       placeholder="Name | Role"></textarea>
-    <button class="admin-only" onclick="save('coaches')">Save</button>
+    <button class="admin-only" onclick="save('coaches')">Save Coaches</button>
+  </div>
+</section>
+
+<!-- CLIPS -->
+<section id="clips">
+  <div class="card">
+    <h2>Clips</h2>
+    <div id="clipsText"></div>
+    <textarea id="clipsInput" class="admin-only"
+      placeholder="Paste video links (one per line)"></textarea>
+    <button class="admin-only" onclick="save('clips')">Save Clips</button>
   </div>
 </section>
 
@@ -268,12 +282,13 @@ window.login=()=>{
 
 const render=(id,cols)=>{
   onValue(ref(db,id),s=>{
-    const body=document.querySelector(`#${id}Table tbody`);
-    body.innerHTML="";
+    const table=document.querySelector(`#${id}Table tbody`);
+    if(!table) return;
+    table.innerHTML="";
     (s.val()||"").split("\n").forEach(r=>{
       const c=r.split("|").map(x=>x.trim());
       if(c.length===cols){
-        body.innerHTML+=`<tr>${c.map(v=>`<td>${v}</td>`).join("")}</tr>`;
+        table.innerHTML+=`<tr>${c.map(v=>`<td>${v}</td>`).join("")}</tr>`;
       }
     });
   });
@@ -285,6 +300,18 @@ render("coaches",2);
 
 onValue(ref(db,"record"),s=>{
   recordText.textContent=s.val()||"0 - 0 - 0";
+});
+
+onValue(ref(db,"news"),s=>{
+  newsText.textContent=s.val()||"";
+});
+
+onValue(ref(db,"clips"),s=>{
+  clipsText.innerHTML="";
+  (s.val()||"").split("\n").forEach(v=>{
+    if(v) clipsText.innerHTML+=
+      `<a class="link" href="${v}" target="_blank">${v}</a><br>`;
+  });
 });
 
 window.save=k=>set(ref(db,k),document.getElementById(k+"Input").value);
