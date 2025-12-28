@@ -14,15 +14,15 @@
 }
 *{box-sizing:border-box}
 body{margin:0;font-family:"Segoe UI",Arial,sans-serif;background:var(--dark);color:var(--text);}
-header{background:linear-gradient(90deg,#8b0000,#ff4500);padding:18px 40px;display:flex;justify-content:space-between;align-items:center;}
+header{background:linear-gradient(90deg,#8b0000,#ff4500);padding:18px 40px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;}
 .brand{display:flex;gap:18px;align-items:center}
 .brand img{height:70px}
 .brand span{font-size:14px;color:#ffe1e1}
-nav{display:flex;gap:18px;align-items:center}
+nav{display:flex;gap:18px;align-items:center;flex-wrap:wrap;}
 nav a{color:#fff;font-weight:600;cursor:pointer;text-decoration:none;font-size:14px;}
 nav a.admin{border:1px solid #fff;padding:5px 12px;border-radius:20px;}
 nav a.logout{border:1px solid #ff4500;color:#ff4500;padding:5px 12px;border-radius:20px;display:none;}
-main{max-width:1200px;margin:auto;padding:40px 20px}
+main{max-width:1200px;margin:auto;padding:20px;}
 section{display:none}
 section.active{display:block}
 .card{background:var(--card);padding:30px;border-radius:14px;box-shadow:0 12px 30px rgba(0,0,0,.45);}
@@ -43,6 +43,14 @@ button{background:var(--accent);font-weight:700;cursor:pointer;}
 .cancel-btn{background:#888;color:#fff}
 a.link{color:#ff7a3d;text-decoration:none}
 a.link:hover{text-decoration:underline}
+
+/* Banner */
+.banner-container{background:#111;color:#fff;padding:10px 20px;margin-bottom:20px;border-radius:10px;overflow:hidden;position:relative;height:40px;}
+.banner-slide{position:absolute;white-space:nowrap;animation:slide 12s linear infinite;}
+@keyframes slide{
+  0%{transform:translateX(100%);}
+  100%{transform:translateX(-100%);}
+}
 </style>
 </head>
 <body>
@@ -55,15 +63,27 @@ a.link:hover{text-decoration:underline}
     </div>
   </div>
   <nav>
+    <a onclick="show('banner')">Home</a>
     <a onclick="show('roster')">Roster</a>
     <a onclick="show('league')">League</a>
     <a onclick="show('coaches')">Coaches</a>
     <a onclick="show('record')">Team Record</a>
+    <a onclick="show('schedule')">Schedule & Results</a>
+    <a onclick="show('news')">News</a>
     <a class="admin" onclick="show('admin')">Admin</a>
     <a class="logout" id="logoutBtn" onclick="logout()">Logout</a>
   </nav>
 </header>
 <main>
+
+<!-- Banner -->
+<section id="banner" class="active">
+  <div class="banner-container">
+    <div class="banner-slide" id="bannerSlide">Welcome to Inferno Nepean Hockey! Upcoming: Team I vs Team II - Dec 30, 2025 | Result: Team I 3-2 Team II</div>
+  </div>
+</section>
+
+<!-- Roster -->
 <section id="roster">
   <div class="card">
     <h2>Player Roster</h2>
@@ -76,6 +96,7 @@ a.link:hover{text-decoration:underline}
   </div>
 </section>
 
+<!-- League -->
 <section id="league">
   <div class="card">
     <h2>League Standings</h2>
@@ -88,6 +109,7 @@ a.link:hover{text-decoration:underline}
   </div>
 </section>
 
+<!-- Coaches -->
 <section id="coaches">
   <div class="card">
     <h2>Coaching Staff</h2>
@@ -100,6 +122,7 @@ a.link:hover{text-decoration:underline}
   </div>
 </section>
 
+<!-- Team Record -->
 <section id="record">
   <div class="card">
     <h2>Team Record</h2>
@@ -112,6 +135,30 @@ a.link:hover{text-decoration:underline}
   </div>
 </section>
 
+<!-- Schedule & Results -->
+<section id="schedule">
+  <div class="card">
+    <h2>Schedule & Results</h2>
+    <table>
+      <thead><tr><th>Date</th><th>Opponent</th><th>Location</th><th>Result</th><th>Actions</th></tr></thead>
+      <tbody id="scheduleBody"></tbody>
+    </table>
+    <textarea id="scheduleInput" class="admin-only" placeholder="Date | Opponent | Location | Result"></textarea>
+    <button class="admin-only" onclick="save('schedule')">Add Game</button>
+  </div>
+</section>
+
+<!-- News -->
+<section id="news">
+  <div class="card">
+    <h2>News</h2>
+    <div id="newsContainer"></div>
+    <textarea id="newsInput" class="admin-only" placeholder="Title | Description"></textarea>
+    <button class="admin-only" onclick="save('news')">Add News</button>
+  </div>
+</section>
+
+<!-- Admin -->
 <section id="admin">
   <div class="card">
     <h2>Admin Login</h2>
@@ -120,6 +167,7 @@ a.link:hover{text-decoration:underline}
     <button onclick="login()">Login</button>
   </div>
 </section>
+
 </main>
 
 <script type="module">
@@ -138,7 +186,7 @@ const ADMIN_PASS="AthFon32";
 let isAdmin = false;
 
 window.show = id => {
-  document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
+  document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
   document.getElementById(id).classList.add("active");
 };
 
@@ -146,30 +194,33 @@ window.login = () => {
   if(user.value!==ADMIN_USER || pass.value!==ADMIN_PASS)
     return alert("Incorrect login");
   isAdmin = true;
-  document.querySelectorAll(".admin-only").forEach(e => e.style.display="block");
+  document.querySelectorAll(".admin-only").forEach(e=>e.style.display="block");
   logoutBtn.style.display="inline-block";
   renderAllTables();
 };
 
 window.logout = () => {
   isAdmin = false;
-  document.querySelectorAll(".admin-only").forEach(e => e.style.display="none");
+  document.querySelectorAll(".admin-only").forEach(e=>e.style.display="none");
   logoutBtn.style.display="none";
-  show("roster");
+  show("banner");
   renderAllTables();
 };
 
+// Generic render function
 function renderTable(key, bodyId, cols){
   onValue(ref(db,key), snap=>{
     const body = document.getElementById(bodyId);
     body.innerHTML = "";
-    const data = snap.val() || {};
+    const data = snap.val()||{};
     let rows = Object.keys(data).map(id=>({id,row:data[id].split("|").map(x=>x.trim())}));
-    if(key==="league") rows.sort((a,b)=>(+b.row[5]||0)-(+a.row[5]||0)); // sort by PTS
+    if(key==="league") rows.sort((a,b)=>(+b.row[5]||0)-(+a.row[5]||0));
+    if(key==="schedule") rows.sort((a,b)=>new Date(a.row[0])-new Date(b.row[0]));
+    if(key==="news") rows.reverse(); // newest first
     rows.forEach(({id,row})=>{
       if(row.length===cols){
         const tr = document.createElement("tr");
-        tr.setAttribute("data-id", id);
+        tr.setAttribute("data-id",id);
         tr.innerHTML = row.map(v=>`<td>${v}</td>`).join("");
         if(isAdmin){
           tr.innerHTML += `<td>
@@ -181,6 +232,18 @@ function renderTable(key, bodyId, cols){
         }
         body.appendChild(tr);
       }
+      if(key==="news"){
+        const newsDiv = document.getElementById("newsContainer");
+        newsDiv.innerHTML = "";
+        rows.forEach(({row})=>{
+          const nDiv = document.createElement("div");
+          nDiv.style.border="1px solid #2a2a2a";
+          nDiv.style.padding="10px";
+          nDiv.style.margin="10px 0";
+          nDiv.innerHTML = `<h3>${row[0]}</h3><p>${row[1]}</p>`;
+          newsDiv.appendChild(nDiv);
+        });
+      }
     });
   });
 }
@@ -189,6 +252,8 @@ function renderAllTables(){
   renderTable("roster","rosterBody",3);
   renderTable("league","leagueBody",6);
   renderTable("coaches","coachesBody",2);
+  renderTable("schedule","scheduleBody",4);
+  renderTable("news","newsContainer",2);
 }
 
 window.editRow = (key,id)=>{
@@ -196,11 +261,11 @@ window.editRow = (key,id)=>{
   const row = document.querySelector(`#${key}Body tr[data-id='${id}']`);
   if(!row) return;
   const cells = Array.from(row.children).slice(0,row.children.length-1);
-  const originalValues = cells.map(td => td.textContent);
-  cells.forEach((td,i)=> td.innerHTML = `<input value="${td.textContent}" style="width:100%;">`);
+  const originalValues = cells.map(td=>td.textContent);
+  cells.forEach((td,i)=> td.innerHTML=`<input value="${td.textContent}" style="width:100%;">`);
   const actionCell = row.children[row.children.length-1];
-  actionCell.innerHTML = `<button class="action-btn save-btn" onclick="saveRow('${key}','${id}')">Save</button>
-                          <button class="action-btn cancel-btn" onclick="cancelEdit('${key}','${id}', [${originalValues.map(v=>`'${v}'`).join(",")}])">Cancel</button>`;
+  actionCell.innerHTML=`<button class="action-btn save-btn" onclick="saveRow('${key}','${id}')">Save</button>
+                        <button class="action-btn cancel-btn" onclick="cancelEdit('${key}','${id}',[${originalValues.map(v=>`'${v}'`).join(",")}])">Cancel</button>`;
 };
 
 window.saveRow = (key,id)=>{
@@ -210,7 +275,7 @@ window.saveRow = (key,id)=>{
   const inputs = Array.from(row.querySelectorAll('input'));
   const newValue = inputs.map(input=>input.value.trim()).join(" | ");
   if(!newValue) return;
-  set(ref(db, key+"/"+id), newValue);
+  set(ref(db,key+"/"+id),newValue);
 };
 
 window.cancelEdit = (key,id,originalValues)=>{
@@ -218,36 +283,38 @@ window.cancelEdit = (key,id,originalValues)=>{
   const row = document.querySelector(`#${key}Body tr[data-id='${id}']`);
   if(!row) return;
   const cells = Array.from(row.children).slice(0,row.children.length-1);
-  cells.forEach((td,i)=> td.textContent = originalValues[i]);
+  cells.forEach((td,i)=>td.textContent=originalValues[i]);
   const actionCell = row.children[row.children.length-1];
-  actionCell.innerHTML = `<button class="action-btn edit-btn" onclick="editRow('${key}','${id}')">Edit</button>
-                          <button class="action-btn delete-btn" onclick="deleteRow('${key}','${id}')">Delete</button>`;
+  actionCell.innerHTML=`<button class="action-btn edit-btn" onclick="editRow('${key}','${id}')">Edit</button>
+                        <button class="action-btn delete-btn" onclick="deleteRow('${key}','${id}')">Delete</button>`;
 };
 
-window.deleteRow = (key,id)=>{
+window.deleteRow=(key,id)=>{
   if(!isAdmin) return alert("You must be an admin to delete!");
   if(confirm("Delete this entry?")) remove(ref(db,key+"/"+id));
 };
 
-window.save = (key)=>{
+window.save=(key)=>{
   if(!isAdmin) return alert("You must be an admin to add entries!");
-  const input = document.getElementById(key+"Input");
+  const input=document.getElementById(key+"Input");
   if(!input.value.trim()) return;
-  const newId = Date.now().toString();
-  set(ref(db,key+"/"+newId), input.value);
+  const newId=Date.now().toString();
+  set(ref(db,key+"/"+newId),input.value);
   input.value="";
 };
 
 function saveRecord(){
   if(!isAdmin) return alert("You must be an admin to edit the record!");
-  const val = document.getElementById("recordInput").value.trim();
+  const val=document.getElementById("recordInput").value.trim();
   if(!val) return;
-  set(ref(db,"record"), val);
+  set(ref(db,"record"),val);
   document.getElementById("recordInput").value="";
 }
 
+// Initial Render
 renderAllTables();
-onValue(ref(db,"record"), s=> document.getElementById("recordText").textContent = s.val() || "0 - 0 - 0");
+onValue(ref(db,"record"),s=>document.getElementById("recordText").textContent=s.val()||"0 - 0 - 0");
+
 </script>
 </body>
 </html>
