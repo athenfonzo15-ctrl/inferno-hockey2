@@ -291,9 +291,61 @@ function saveRecord(){
 }
 
 /* --- Initial render --- */
-renderAllTables();
-onValue(ref(db,"record"), s=> document.getElementById("recordText").textContent = s.val() || "0 - 0 - 0");
+function renderTable(key, bodyId, cols){
+  onValue(ref(db,key), snap=>{
+    const body = document.getElementById(bodyId);
+    body.innerHTML = "";
+    const data = snap.val() || {};
+
+    let rows = [];
+
+    Object.keys(data).forEach(id => {
+      const row = data[id].split("|").map(x=>x.trim());
+      if(row.length === cols){
+        rows.push({ id, row });
+      }
+    });
+
+    // 🔥 SORT ONLY LEAGUE STANDINGS
+    if(key === "league"){
+      rows.sort((a,b)=>{
+        const ptsA = parseInt(a.row[5]) || 0;
+        const ptsB = parseInt(b.row[5]) || 0;
+        if(ptsB !== ptsA) return ptsB - ptsA;
+
+        const wA = parseInt(a.row[2]) || 0;
+        const wB = parseInt(b.row[2]) || 0;
+        if(wB !== wA) return wB - wA;
+
+        const tA = parseInt(a.row[4]) || 0;
+        const tB = parseInt(b.row[4]) || 0;
+        if(tB !== tA) return tB - tA;
+
+        return a.row[0].localeCompare(b.row[0]);
+      });
+    }
+
+    // Render rows
+    rows.forEach(({id,row})=>{
+      const tr = document.createElement("tr");
+      tr.setAttribute("data-id", id);
+      tr.innerHTML = row.map(v=>`<td>${v}</td>`).join("");
+
+      if(isAdmin){
+        tr.innerHTML += `<td>
+          <button class="action-btn edit-btn" onclick="editRow('${key}','${id}')">Edit</button>
+          <button class="action-btn delete-btn" onclick="deleteRow('${key}','${id}')">Delete</button>
+        </td>`;
+      } else {
+        tr.innerHTML += `<td>--</td>`;
+      }
+
+      body.appendChild(tr);
+    });
+  });
+}
 
 </script>
 </body>
 </html>
+
