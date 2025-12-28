@@ -65,19 +65,7 @@ button{background:var(--accent);font-weight:700;cursor:pointer}
 
 <main>
 
-<section id="roster" class="active">
-  <div class="card">
-    <h2>Roster</h2>
-    <table>
-      <thead><tr><th>Name</th><th>Pos</th><th>#</th><th>Actions</th></tr></thead>
-      <tbody id="rosterBody"></tbody>
-    </table>
-    <textarea id="rosterInput" class="admin-only" placeholder="Name | Pos | #"></textarea>
-    <button class="admin-only" onclick="save('roster')">Add</button>
-  </div>
-</section>
-
-<section id="league">
+<section id="league" class="active">
   <div class="card">
     <h2>League Standings</h2>
     <table>
@@ -90,28 +78,7 @@ button{background:var(--accent);font-weight:700;cursor:pointer}
     </table>
     <textarea id="leagueInput" class="admin-only"
       placeholder="Team | GP | W | L | T | PTS"></textarea>
-    <button class="admin-only" onclick="save('league')">Add Team</button>
-  </div>
-</section>
-
-<section id="coaches">
-  <div class="card">
-    <h2>Coaches</h2>
-    <table>
-      <thead><tr><th>Name</th><th>Role</th><th>Actions</th></tr></thead>
-      <tbody id="coachesBody"></tbody>
-    </table>
-    <textarea id="coachesInput" class="admin-only" placeholder="Name | Role"></textarea>
-    <button class="admin-only" onclick="save('coaches')">Add</button>
-  </div>
-</section>
-
-<section id="record">
-  <div class="card">
-    <h2>Team Record</h2>
-    <h1 id="recordText">0 - 0 - 0</h1>
-    <textarea id="recordInput" class="admin-only" placeholder="W-L-T"></textarea>
-    <button class="admin-only" onclick="saveRecord()">Save</button>
+    <button class="admin-only" onclick="addTeam()">Add Team</button>
   </div>
 </section>
 
@@ -147,7 +114,8 @@ window.show=id=>{
 };
 
 window.login=()=>{
-  if(user.value!==ADMIN_USER||pass.value!==ADMIN_PASS) return alert("Wrong login");
+  if(user.value!==ADMIN_USER||pass.value!==ADMIN_PASS)
+    return alert("Wrong login");
   isAdmin=true;
   document.querySelectorAll(".admin-only").forEach(e=>e.style.display="block");
   logoutBtn.style.display="inline-block";
@@ -157,69 +125,63 @@ window.logout=()=>{
   isAdmin=false;
   document.querySelectorAll(".admin-only").forEach(e=>e.style.display="none");
   logoutBtn.style.display="none";
-  show("roster");
 };
 
-function render(key,body,cols){
-  onValue(ref(db,key),snap=>{
-    const el=document.getElementById(body);
-    el.innerHTML="";
+function renderStandings(){
+  onValue(ref(db,"league"),snap=>{
+    const body=document.getElementById("leagueBody");
+    body.innerHTML="";
     let rows=[];
     const data=snap.val()||{};
     Object.keys(data).forEach(id=>{
       const row=data[id].split("|").map(v=>v.trim());
-      if(row.length===cols) rows.push({id,row});
+      if(row.length===6) rows.push({id,row});
     });
 
-    // ✅ SORT BY POINTS ONLY
-    if(key==="league"){
-      rows.sort((a,b)=>(parseInt(b.row[5])||0)-(parseInt(a.row[5])||0));
-    }
+    // 🔥 SORT BY POINTS
+    rows.sort((a,b)=>(parseInt(b.row[5])||0)-(parseInt(a.row[5])||0));
 
     rows.forEach(({id,row})=>{
       const tr=document.createElement("tr");
       tr.dataset.id=id;
       tr.innerHTML=row.map(v=>`<td>${v}</td>`).join("")+
       `<td>${isAdmin?`
-        <button class="action-btn edit-btn" onclick="edit('${key}','${id}')">Edit</button>
-        <button class="action-btn delete-btn" onclick="del('${key}','${id}')">Delete</button>
+        <button class="action-btn edit-btn" onclick="editTeam('${id}')">Edit</button>
+        <button class="action-btn delete-btn" onclick="deleteTeam('${id}')">Delete</button>
       `:"--"}</td>`;
-      el.appendChild(tr);
+      body.appendChild(tr);
     });
   });
 }
 
-render("roster","rosterBody",3);
-render("league","leagueBody",6);
-render("coaches","coachesBody",2);
-
-window.save=key=>{
-  const i=document.getElementById(key+"Input");
-  if(!i.value.trim()) return;
-  set(ref(db,key+"/"+Date.now()),i.value);
-  i.value="";
+window.addTeam=()=>{
+  const input=document.getElementById("leagueInput");
+  if(!input.value.trim()) return;
+  set(ref(db,"league/"+Date.now()),input.value);
+  input.value="";
 };
 
-window.del=(key,id)=>remove(ref(db,key+"/"+id));
+window.deleteTeam=id=>{
+  if(confirm("Delete this team?")) remove(ref(db,"league/"+id));
+};
 
-window.edit=(key,id)=>{
-  const row=document.querySelector(`#${key}Body tr[data-id='${id}']`);
-  const vals=[...row.children].slice(0,-1).map(td=>td.textContent);
-  [...row.children].slice(0,-1).forEach((td,i)=>td.innerHTML=`<input value="${vals[i]}">`);
+window.editTeam=id=>{
+  const row=document.querySelector(`tr[data-id='${id}']`);
+  const values=[...row.children].slice(0,6).map(td=>td.textContent);
+  [...row.children].slice(0,6)
+    .forEach((td,i)=>td.innerHTML=`<input value="${values[i]}">`);
   row.lastChild.innerHTML=`
-    <button class="action-btn save-btn" onclick="saveEdit('${key}','${id}')">Save</button>
-    <button class="action-btn cancel-btn" onclick="location.reload()">Cancel</button>`;
+    <button class="action-btn save-btn" onclick="saveTeam('${id}')">Save</button>
+    <button class="action-btn cancel-btn" onclick="renderStandings()">Cancel</button>`;
 };
 
-window.saveEdit=(key,id)=>{
-  const row=document.querySelector(`#${key}Body tr[data-id='${id}']`);
-  const vals=[...row.querySelectorAll("input")].map(i=>i.value);
-  set(ref(db,key+"/"+id),vals.join(" | "));
+window.saveTeam=id=>{
+  const row=document.querySelector(`tr[data-id='${id}']`);
+  const values=[...row.querySelectorAll("input")].map(i=>i.value.trim());
+  set(ref(db,"league/"+id),values.join(" | "));
 };
 
-window.saveRecord=()=>set(ref(db,"record"),recordInput.value);
-
-onValue(ref(db,"record"),s=>recordText.textContent=s.val()||"0 - 0 - 0");
+renderStandings();
 </script>
 
 </body>
