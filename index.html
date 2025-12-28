@@ -22,6 +22,12 @@ nav{display:flex;gap:18px;align-items:center;flex-wrap:wrap;}
 nav a{color:#fff;font-weight:600;cursor:pointer;text-decoration:none;font-size:14px;}
 nav a.admin{border:1px solid #fff;padding:5px 12px;border-radius:20px;}
 nav a.logout{border:1px solid #ff4500;color:#ff4500;padding:5px 12px;border-radius:20px;display:none;}
+.banner-container{background:#111;color:#fff;padding:10px 20px;border-radius:10px;overflow:hidden;position:relative;height:40px;margin:10px 40px;}
+.banner-slide{position:absolute;white-space:nowrap;animation:slide 12s linear infinite;}
+@keyframes slide{
+  0%{transform:translateX(100%);}
+  100%{transform:translateX(-100%);}
+}
 main{max-width:1200px;margin:auto;padding:20px;}
 section{display:none}
 section.active{display:block}
@@ -43,14 +49,6 @@ button{background:var(--accent);font-weight:700;cursor:pointer;}
 .cancel-btn{background:#888;color:#fff}
 a.link{color:#ff7a3d;text-decoration:none}
 a.link:hover{text-decoration:underline}
-
-/* Banner */
-.banner-container{background:#111;color:#fff;padding:10px 20px;margin-bottom:20px;border-radius:10px;overflow:hidden;position:relative;height:40px;}
-.banner-slide{position:absolute;white-space:nowrap;animation:slide 12s linear infinite;}
-@keyframes slide{
-  0%{transform:translateX(100%);}
-  100%{transform:translateX(-100%);}
-}
 </style>
 </head>
 <body>
@@ -63,7 +61,6 @@ a.link:hover{text-decoration:underline}
     </div>
   </div>
   <nav>
-    <a onclick="show('banner')">Home</a>
     <a onclick="show('roster')">Roster</a>
     <a onclick="show('league')">League</a>
     <a onclick="show('coaches')">Coaches</a>
@@ -74,15 +71,13 @@ a.link:hover{text-decoration:underline}
     <a class="logout" id="logoutBtn" onclick="logout()">Logout</a>
   </nav>
 </header>
+
+<!-- Banner always visible -->
+<div class="banner-container">
+  <div class="banner-slide" id="bannerSlide">Loading updates...</div>
+</div>
+
 <main>
-
-<!-- Banner -->
-<section id="banner" class="active">
-  <div class="banner-container">
-    <div class="banner-slide" id="bannerSlide">Welcome to Inferno Nepean Hockey! Upcoming: Team I vs Team II - Dec 30, 2025 | Result: Team I 3-2 Team II</div>
-  </div>
-</section>
-
 <!-- Roster -->
 <section id="roster">
   <div class="card">
@@ -191,8 +186,7 @@ window.show = id => {
 };
 
 window.login = () => {
-  if(user.value!==ADMIN_USER || pass.value!==ADMIN_PASS)
-    return alert("Incorrect login");
+  if(user.value!==ADMIN_USER || pass.value!==ADMIN_PASS) return alert("Incorrect login");
   isAdmin = true;
   document.querySelectorAll(".admin-only").forEach(e=>e.style.display="block");
   logoutBtn.style.display="inline-block";
@@ -203,7 +197,7 @@ window.logout = () => {
   isAdmin = false;
   document.querySelectorAll(".admin-only").forEach(e=>e.style.display="none");
   logoutBtn.style.display="none";
-  show("banner");
+  show("roster");
   renderAllTables();
 };
 
@@ -211,14 +205,15 @@ window.logout = () => {
 function renderTable(key, bodyId, cols){
   onValue(ref(db,key), snap=>{
     const body = document.getElementById(bodyId);
-    body.innerHTML = "";
+    if(body) body.innerHTML="";
     const data = snap.val()||{};
     let rows = Object.keys(data).map(id=>({id,row:data[id].split("|").map(x=>x.trim())}));
     if(key==="league") rows.sort((a,b)=>(+b.row[5]||0)-(+a.row[5]||0));
     if(key==="schedule") rows.sort((a,b)=>new Date(a.row[0])-new Date(b.row[0]));
     if(key==="news") rows.reverse(); // newest first
+
     rows.forEach(({id,row})=>{
-      if(row.length===cols){
+      if(row.length===cols && body){
         const tr = document.createElement("tr");
         tr.setAttribute("data-id",id);
         tr.innerHTML = row.map(v=>`<td>${v}</td>`).join("");
@@ -232,19 +227,32 @@ function renderTable(key, bodyId, cols){
         }
         body.appendChild(tr);
       }
-      if(key==="news"){
-        const newsDiv = document.getElementById("newsContainer");
-        newsDiv.innerHTML = "";
-        rows.forEach(({row})=>{
-          const nDiv = document.createElement("div");
-          nDiv.style.border="1px solid #2a2a2a";
-          nDiv.style.padding="10px";
-          nDiv.style.margin="10px 0";
-          nDiv.innerHTML = `<h3>${row[0]}</h3><p>${row[1]}</p>`;
-          newsDiv.appendChild(nDiv);
-        });
-      }
     });
+
+    // Update banner content dynamically
+    const banner = document.getElementById("bannerSlide");
+    if(banner){
+      let bannerItems = [];
+      if(key==="schedule") rows.forEach(r=>bannerItems.push(`Upcoming: ${r.row[0]} vs ${r.row[1]} (${r.row[2]})`));
+      if(key==="news") rows.forEach(r=>bannerItems.push(`News: ${r.row[0]}`));
+      banner.innerHTML = bannerItems.join(" | ") || "Welcome to Inferno Nepean Hockey!";
+    }
+
+    // Render news cards
+    if(key==="news"){
+      const newsDiv = document.getElementById("newsContainer");
+      if(newsDiv) newsDiv.innerHTML="";
+      rows.forEach(({id,row})=>{
+        const nDiv = document.createElement("div");
+        nDiv.style.border="1px solid #2a2a2a";
+        nDiv.style.padding="10px";
+        nDiv.style.margin="10px 0";
+        let adminActions = isAdmin ? `<button class="action-btn edit-btn" onclick="editRow('news','${id}')">Edit</button>
+                                      <button class="action-btn delete-btn" onclick="deleteRow('news','${id}')">Delete</button>` : '';
+        nDiv.innerHTML = `<h3>${row[0]}</h3><p>${row[1]}</p>${adminActions}`;
+        newsDiv.appendChild(nDiv);
+      });
+    }
   });
 }
 
@@ -258,7 +266,8 @@ function renderAllTables(){
 
 window.editRow = (key,id)=>{
   if(!isAdmin) return alert("You must be an admin to edit!");
-  const row = document.querySelector(`#${key}Body tr[data-id='${id}']`);
+  let row = document.querySelector(`#${key}Body tr[data-id='${id}']`);
+  if(!row && key==="news") return; // news editing handled inline
   if(!row) return;
   const cells = Array.from(row.children).slice(0,row.children.length-1);
   const originalValues = cells.map(td=>td.textContent);
@@ -314,7 +323,6 @@ function saveRecord(){
 // Initial Render
 renderAllTables();
 onValue(ref(db,"record"),s=>document.getElementById("recordText").textContent=s.val()||"0 - 0 - 0");
-
 </script>
 </body>
 </html>
