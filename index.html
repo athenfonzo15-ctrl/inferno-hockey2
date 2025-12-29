@@ -55,9 +55,9 @@ th,td{padding:10px;text-align:center;border-bottom:1px solid #2a2a2a;font-size:1
 th{background:#111;color:var(--accent);font-size:11px;text-transform: uppercase;}
 
 .admin-only{display:none;}
-.banner-controls{background:#222; padding:10px; border-radius:8px; margin-bottom:15px; display:flex; gap:20px; align-items:center;}
+.admin-input-group{background:#222; padding:15px; border-radius:8px; margin-top:20px;}
 input,textarea,select{width:100%;padding:10px;margin-top:8px;border-radius:4px;border:1px solid #333;background:#050505;color:#fff;}
-.inline-check{width:auto; margin:0;}
+.inline-check{width:auto; vertical-align: middle; margin-right: 5px;}
 button{background:var(--accent);color:#fff;border:none;padding:10px;margin-top:10px;cursor:pointer;font-weight:bold;border-radius:4px;}
 .btn-sm{width:auto;padding:4px 8px;font-size:11px;margin:2px;}
 </style>
@@ -79,7 +79,7 @@ button{background:var(--accent);color:#fff;border:none;padding:10px;margin-top:1
     <a id="logoutBtn" style="display:none;color:yellow;" onclick="logout()">Logout</a>
   </nav>
   <div class="banner-wrap">
-    <div class="banner-label" id="bannerLabel">UPCOMING</div>
+    <div class="banner-label">UPCOMING</div>
     <div class="banner-scroll" id="bannerText">Checking schedule...</div>
   </div>
 </header>
@@ -88,24 +88,14 @@ button{background:var(--accent);color:#fff;border:none;padding:10px;margin-top:1
   <section id="schedule">
     <div class="card">
       <h2>Team Schedule & Events</h2>
-      
-      <div class="admin-only">
-        <div class="banner-controls">
-          <strong>Display on Banner:</strong>
-          <label><input type="checkbox" id="showGames" class="inline-check" checked onchange="renderSchedule()"> Games</label>
-          <label><input type="checkbox" id="showTourneys" class="inline-check" checked onchange="renderSchedule()"> Tournaments</label>
-          <label><input type="checkbox" id="showPractices" class="inline-check" checked onchange="renderSchedule()"> Practices</label>
-        </div>
-      </div>
-
       <table>
         <thead>
-          <tr><th>Type</th><th>Date</th><th>Details</th><th>Location</th><th>Result/Score</th><th class="admin-only">Actions</th></tr>
+          <tr><th>Type</th><th>Date</th><th>Details</th><th>Location</th><th>Result/Score</th><th>On Banner</th><th class="admin-only">Actions</th></tr>
         </thead>
         <tbody id="scheduleBody"></tbody>
       </table>
 
-      <div class="admin-only">
+      <div class="admin-only admin-input-group">
         <h3>Add New Event</h3>
         <select id="eventType">
           <option value="Game">Game</option>
@@ -115,7 +105,10 @@ button{background:var(--accent);color:#fff;border:none;padding:10px;margin-top:1
         <input id="eventDate" placeholder="Date/Time">
         <input id="eventDetail" placeholder="Opponent or Name">
         <input id="eventLoc" placeholder="Location">
-        <input id="eventResult" placeholder="Result (Empty if upcoming)">
+        <input id="eventResult" placeholder="Result (Leave empty for upcoming)">
+        <div style="margin-top:10px;">
+            <label><input type="checkbox" id="eventBannerToggle" class="inline-check" checked> <strong>Show this specific event on banner?</strong></label>
+        </div>
         <button onclick="addEvent()">Add Event</button>
       </div>
     </div>
@@ -125,7 +118,7 @@ button{background:var(--accent);color:#fff;border:none;padding:10px;margin-top:1
     <div class="card">
       <h2>Team News</h2>
       <div id="newsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:15px;"></div>
-      <div class="admin-only" style="margin-top:20px; border-top:1px solid #333; padding-top:10px;">
+      <div class="admin-only admin-input-group">
         <h3>Post News</h3>
         <input id="newsTitle" placeholder="Title">
         <textarea id="newsContent" placeholder="Content"></textarea>
@@ -143,7 +136,7 @@ button{background:var(--accent);color:#fff;border:none;padding:10px;margin-top:1
       <table><thead><tr><th>Name</th><th>#</th><th>G</th><th>A</th><th>P</th><th class="admin-only">Actions</th></tr></thead><tbody id="roster-defense"></tbody></table>
       <h3>Goalies</h3>
       <table><thead><tr><th>Name</th><th>#</th><th>G</th><th>A</th><th>P</th><th class="admin-only">Actions</th></tr></thead><tbody id="roster-goalie"></tbody></table>
-      <div class="admin-only">
+      <div class="admin-only admin-input-group">
         <input id="pName" placeholder="Name">
         <input id="pNum" placeholder="Number">
         <select id="pPos">
@@ -166,7 +159,7 @@ button{background:var(--accent);color:#fff;border:none;padding:10px;margin-top:1
         </thead>
         <tbody id="leagueBody"></tbody>
       </table>
-      <div class="admin-only">
+      <div class="admin-only admin-input-group">
         <input id="leagueInput" placeholder="Team | GP | W | L | T | PTS | GF | GA | PIM | Face% | Shots | L10 | Strk | Last Game">
         <button onclick="saveGeneric('league', 'leagueInput')">Add Team</button>
       </div>
@@ -181,7 +174,7 @@ button{background:var(--accent);color:#fff;border:none;padding:10px;margin-top:1
           <thead><tr><th>Phase</th><th>W-L-T</th><th class="admin-only">Actions</th></tr></thead>
           <tbody id="recordBody"></tbody>
         </table>
-        <div class="admin-only">
+        <div class="admin-only admin-input-group">
           <input id="recordInput" placeholder="Season Phase | W-L-T">
           <button onclick="saveGeneric('record', 'recordInput')">Update Record</button>
         </div>
@@ -230,24 +223,24 @@ function renderSchedule() {
     let bannerItems = [];
     const data = snap.val() || {};
 
-    const showG = document.getElementById("showGames").checked;
-    const showT = document.getElementById("showTourneys").checked;
-    const showP = document.getElementById("showPractices").checked;
-    
     Object.keys(data).forEach(id => {
       const parts = data[id].split("|").map(p => p.trim());
       const type = parts[0];
+      const showOnBanner = parts[5] === "true";
+      const isUpcoming = !parts[4] || parts[4].toLowerCase() === "tbd";
+
       const tr = document.createElement("tr");
       tr.id = `schedule-${id}`;
-      tr.innerHTML = parts.map(p => `<td>${p}</td>`).join("");
+      // Display first 5 parts in table, then Banner Status
+      let rowHtml = "";
+      for(let i=0; i<5; i++) rowHtml += `<td>${parts[i]}</td>`;
+      rowHtml += `<td>${showOnBanner ? '✅ Yes' : '❌ No'}</td>`;
+      tr.innerHTML = rowHtml;
 
-      // Banner Logic with Toggles
-      const isUpcoming = !parts[4] || parts[4].toLowerCase() === "tbd";
-      if(isUpcoming) {
-        if((type === "Game" && showG) || (type === "Tournament" && showT) || (type === "Practice" && showP)) {
-            let icon = type === "Tournament" ? "🏆" : "🏒";
-            bannerItems.push(`${icon} ${type.toUpperCase()}: ${parts[1]} - ${parts[2]} (${parts[3]})`);
-        }
+      // Banner Logic: Must be upcoming AND marked for banner
+      if(isUpcoming && showOnBanner) {
+          let icon = type === "Tournament" ? "🏆" : "🏒";
+          bannerItems.push(`${icon} ${type.toUpperCase()}: ${parts[1]} - ${parts[2]} (${parts[3]})`);
       }
 
       if(isAdmin) {
@@ -258,7 +251,7 @@ function renderSchedule() {
       }
       body.appendChild(tr);
     });
-    banner.innerText = bannerItems.join(" | ") || "No selected events to display.";
+    banner.innerText = bannerItems.join(" | ") || "No upcoming featured events.";
   });
 }
 
@@ -328,28 +321,36 @@ function renderNews() {
 
 // --- ACTIONS ---
 window.addEvent = () => {
-    set(ref(db, "schedule/" + Date.now()), `${eventType.value}|${eventDate.value}|${eventDetail.value}|${eventLoc.value}|${eventResult.value}`);
+    const bannerVal = document.getElementById("eventBannerToggle").checked ? "true" : "false";
+    const eventString = `${eventType.value}|${eventDate.value}|${eventDetail.value}|${eventLoc.value}|${eventResult.value}|${bannerVal}`;
+    set(ref(db, "schedule/" + Date.now()), eventString);
     eventDate.value=""; eventDetail.value=""; eventLoc.value=""; eventResult.value="";
 };
+
 window.saveGeneric = (key, inputId) => {
     set(ref(db, key + "/" + Date.now()), document.getElementById(inputId).value);
     document.getElementById(inputId).value = "";
 };
+
 window.addPlayer = () => {
     set(ref(db, "roster/" + Date.now()), `${pName.value}|${pNum.value}|${pPos.value}|${pStats.value}`);
     pName.value=""; pNum.value=""; pStats.value="";
 };
+
 window.saveNews = () => {
     set(ref(db, "news/" + Date.now()), `${newsTitle.value}|${newsContent.value}`);
     newsTitle.value=""; newsContent.value="";
 };
+
 window.deleteItem = (key, id) => { if(confirm("Delete?")) remove(ref(db, key+"/"+id)); };
+
 window.initEdit = (key, id, currentVal) => {
     const tr = document.getElementById(`${key}-${id}`) || document.getElementById(`news-${id}`);
     tr.innerHTML = `<td colspan="100%"><input id="edit-${id}" style="width:80%" value="${currentVal}">
                     <button class="btn-sm" style="background:green" onclick="finishEdit('${key}','${id}')">Save</button>
                     <button class="btn-sm" onclick="renderAll()">Cancel</button></td>`;
 };
+
 window.finishEdit = (key, id) => set(ref(db, key+"/"+id), document.getElementById(`edit-${id}`).value);
 
 function renderAll() {
