@@ -60,6 +60,9 @@ input,textarea,select{width:100%;padding:10px;margin-top:8px;border-radius:4px;b
 .inline-check{width:auto; vertical-align: middle; margin-right: 5px;}
 button{background:var(--accent);color:#fff;border:none;padding:10px;margin-top:10px;cursor:pointer;font-weight:bold;border-radius:4px;}
 .btn-sm{width:auto;padding:4px 8px;font-size:11px;margin:2px;}
+
+/* Special Edit Overlay for Schedule */
+.edit-box { background: #333; padding: 10px; border-radius: 8px; border: 1px solid var(--accent); margin: 10px 0; }
 </style>
 </head>
 <body>
@@ -90,13 +93,13 @@ button{background:var(--accent);color:#fff;border:none;padding:10px;margin-top:1
       <h2>Team Schedule & Events</h2>
       <table>
         <thead>
-          <tr><th>Type</th><th>Date</th><th>Details</th><th>Location</th><th>Result/Score</th><th>On Banner</th><th class="admin-only">Actions</th></tr>
+          <tr><th>Type</th><th>Date</th><th>Details</th><th>Location</th><th>Result/Score</th><th>Banner Status</th><th class="admin-only">Actions</th></tr>
         </thead>
         <tbody id="scheduleBody"></tbody>
       </table>
 
       <div class="admin-only admin-input-group">
-        <h3>Add New Event</h3>
+        <h3>Add New Event (Prep Mode)</h3>
         <select id="eventType">
           <option value="Game">Game</option>
           <option value="Tournament">Tournament</option>
@@ -107,7 +110,7 @@ button{background:var(--accent);color:#fff;border:none;padding:10px;margin-top:1
         <input id="eventLoc" placeholder="Location">
         <input id="eventResult" placeholder="Result (Leave empty for upcoming)">
         <div style="margin-top:10px;">
-            <label><input type="checkbox" id="eventBannerToggle" class="inline-check" checked> <strong>Show this specific event on banner?</strong></label>
+            <label><input type="checkbox" id="eventBannerToggle" class="inline-check"> <strong>Show on Banner immediately?</strong></label>
         </div>
         <button onclick="addEvent()">Add Event</button>
       </div>
@@ -231,13 +234,11 @@ function renderSchedule() {
 
       const tr = document.createElement("tr");
       tr.id = `schedule-${id}`;
-      // Display first 5 parts in table, then Banner Status
       let rowHtml = "";
       for(let i=0; i<5; i++) rowHtml += `<td>${parts[i]}</td>`;
-      rowHtml += `<td>${showOnBanner ? '✅ Yes' : '❌ No'}</td>`;
+      rowHtml += `<td style="color:${showOnBanner ? 'lime':'#555'}">${showOnBanner ? 'ON BANNER' : 'HIDDEN'}</td>`;
       tr.innerHTML = rowHtml;
 
-      // Banner Logic: Must be upcoming AND marked for banner
       if(isUpcoming && showOnBanner) {
           let icon = type === "Tournament" ? "🏆" : "🏒";
           bannerItems.push(`${icon} ${type.toUpperCase()}: ${parts[1]} - ${parts[2]} (${parts[3]})`);
@@ -245,7 +246,7 @@ function renderSchedule() {
 
       if(isAdmin) {
         const td = document.createElement("td");
-        td.innerHTML = `<button class="btn-sm" onclick="initEdit('schedule','${id}','${data[id]}')">Edit</button>
+        td.innerHTML = `<button class="btn-sm" onclick="initScheduleEdit('${id}','${data[id]}')">Edit/Toggle</button>
                         <button class="btn-sm" style="background:red" onclick="deleteItem('schedule','${id}')">X</button>`;
         tr.appendChild(td);
       }
@@ -254,6 +255,33 @@ function renderSchedule() {
     banner.innerText = bannerItems.join(" | ") || "No upcoming featured events.";
   });
 }
+
+// Special Edit Handler for Schedule
+window.initScheduleEdit = (id, val) => {
+    const p = val.split("|").map(x => x.trim());
+    const tr = document.getElementById(`schedule-${id}`);
+    tr.innerHTML = `
+      <td colspan="100%">
+        <div class="edit-box">
+          <select id="edType-${id}"><option ${p[0]=='Game'?'selected':''}>Game</option><option ${p[0]=='Tournament'?'selected':''}>Tournament</option><option ${p[0]=='Practice'?'selected':''}>Practice</option></select>
+          <input id="edDate-${id}" value="${p[1]}" placeholder="Date">
+          <input id="edDet-${id}" value="${p[2]}" placeholder="Details">
+          <input id="edLoc-${id}" value="${p[3]}" placeholder="Location">
+          <input id="edRes-${id}" value="${p[4]}" placeholder="Result">
+          <label><input type="checkbox" id="edBan-${id}" ${p[5]=='true'?'checked':''}> Show on Banner</label><br>
+          <button class="btn-sm" style="background:green" onclick="saveScheduleEdit('${id}')">Save Changes</button>
+          <button class="btn-sm" onclick="renderSchedule()">Cancel</button>
+        </div>
+      </td>`;
+};
+
+window.saveScheduleEdit = (id) => {
+    const banner = document.getElementById(`edBan-${id}`).checked ? "true" : "false";
+    const str = `${document.getElementById(`edType-${id}`).value}|${document.getElementById(`edDate-${id}`).value}|${document.getElementById(`edDet-${id}`).value}|${document.getElementById(`edLoc-${id}`).value}|${document.getElementById(`edRes-${id}`).value}|${banner}`;
+    set(ref(db, "schedule/"+id), str);
+};
+
+// --- GENERAL RENDERING ---
 
 function renderTable(key, bodyId) {
   onValue(ref(db, key), snap => {
@@ -325,6 +353,7 @@ window.addEvent = () => {
     const eventString = `${eventType.value}|${eventDate.value}|${eventDetail.value}|${eventLoc.value}|${eventResult.value}|${bannerVal}`;
     set(ref(db, "schedule/" + Date.now()), eventString);
     eventDate.value=""; eventDetail.value=""; eventLoc.value=""; eventResult.value="";
+    document.getElementById("eventBannerToggle").checked = false;
 };
 
 window.saveGeneric = (key, inputId) => {
