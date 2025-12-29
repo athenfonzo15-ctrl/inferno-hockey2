@@ -28,6 +28,7 @@ window.db = getDatabase(window.app);
   --highlight:#ff7a3d;
   --danger: #d9534f;
   --success: #28a745;
+  --playoff: #ff0000;
 }
 *{box-sizing:border-box;}
 body{margin:0;font-family:"Segoe UI",sans-serif;background:var(--dark);color:var(--text);}
@@ -49,19 +50,19 @@ section{display:none;}
 section.active{display:block;}
 .card{background:var(--card);padding:20px;border-radius:12px;margin-bottom:20px;border:1px solid #222; overflow-x: auto;}
 h2{margin-top:0;border-left:5px solid var(--accent);padding-left:15px;text-transform:uppercase;font-size:20px;}
+h3{color:var(--highlight); margin-top: 25px;}
 
 table{width:100%;border-collapse:collapse;margin-top:10px; min-width: 1000px;}
-th,td{padding:10px;text-align:center;border-bottom:1px solid #2a2a2a;font-size:13px;}
+th,td{padding:12px;text-align:center;border-bottom:1px solid #2a2a2a;font-size:13px;}
 th{background:#111;color:var(--accent);font-size:11px;text-transform: uppercase;}
+
+.row-playoff { border-left: 5px solid var(--playoff); background: rgba(255,0,0,0.05); }
 
 .admin-only{display:none;}
 .admin-input-group{background:#222; padding:15px; border-radius:8px; margin-top:20px;}
 input,textarea,select{width:100%;padding:10px;margin-top:8px;border-radius:4px;border:1px solid #333;background:#050505;color:#fff;}
-.inline-check{width:auto; vertical-align: middle; margin-right: 5px;}
 button{background:var(--accent);color:#fff;border:none;padding:10px;margin-top:10px;cursor:pointer;font-weight:bold;border-radius:4px;}
 .btn-sm{width:auto;padding:4px 8px;font-size:11px;margin:2px;}
-
-/* Special Edit Overlay for Schedule */
 .edit-box { background: #333; padding: 10px; border-radius: 8px; border: 1px solid var(--accent); margin: 10px 0; }
 </style>
 </head>
@@ -74,7 +75,7 @@ button{background:var(--accent);color:#fff;border:none;padding:10px;margin-top:1
   </div>
   <nav>
     <a onclick="show('news')">News</a>
-    <a onclick="show('roster')">Roster</a>
+    <a onclick="show('roster')">Roster & Staff</a>
     <a onclick="show('league')">Standings</a>
     <a onclick="show('schedule')">Schedule</a>
     <a onclick="show('record')">Record</a>
@@ -88,6 +89,46 @@ button{background:var(--accent);color:#fff;border:none;padding:10px;margin-top:1
 </header>
 
 <main>
+  <section id="roster">
+    <div class="card">
+      <h2>Team Roster</h2>
+      <h3>Forwards</h3>
+      <table><thead><tr><th>Name</th><th>#</th><th>G</th><th>A</th><th>P</th><th class="admin-only">Actions</th></tr></thead><tbody id="roster-forward"></tbody></table>
+      <h3>Defense</h3>
+      <table><thead><tr><th>Name</th><th>#</th><th>G</th><th>A</th><th>P</th><th class="admin-only">Actions</th></tr></thead><tbody id="roster-defense"></tbody></table>
+      <h3>Goalies</h3>
+      <table><thead><tr><th>Name</th><th>#</th><th>W-L-OTL</th><th>GAA</th><th>SV%</th><th class="admin-only">Actions</th></tr></thead><tbody id="roster-goalie"></tbody></table>
+      
+      <div class="admin-only admin-input-group">
+        <h3>Add Player</h3>
+        <input id="pName" placeholder="Name">
+        <input id="pNum" placeholder="Number">
+        <select id="pPos" onchange="toggleStatPlaceholder()">
+            <option value="forward">Forward</option>
+            <option value="defense">Defense</option>
+            <option value="goalie">Goalie</option>
+        </select>
+        <input id="pStats" placeholder="Goals | Assists | Points">
+        <button onclick="addPlayer()">Add Player</button>
+      </div>
+    </div>
+
+    <div class="card">
+        <h2>Coaching Staff</h2>
+        <table>
+            <thead><tr><th>Name</th><th>Role</th><th>Focus / Bio</th><th class="admin-only">Actions</th></tr></thead>
+            <tbody id="coachBody"></tbody>
+        </table>
+        <div class="admin-only admin-input-group">
+            <h3>Add Coach</h3>
+            <input id="cName" placeholder="Coach Name">
+            <input id="cRole" placeholder="Role (e.g. Head Coach)">
+            <input id="cBio" placeholder="Bio/Focus">
+            <button onclick="saveGeneric('coaches', 'cName|cRole|cBio', true)">Add Coach</button>
+        </div>
+    </div>
+  </section>
+
   <section id="schedule">
     <div class="card">
       <h2>Team Schedule & Events</h2>
@@ -99,9 +140,10 @@ button{background:var(--accent);color:#fff;border:none;padding:10px;margin-top:1
       </table>
 
       <div class="admin-only admin-input-group">
-        <h3>Add New Event (Prep Mode)</h3>
+        <h3>Add New Event</h3>
         <select id="eventType">
           <option value="Game">Game</option>
+          <option value="Playoff Game">Playoff Game</option>
           <option value="Tournament">Tournament</option>
           <option value="Practice">Practice</option>
         </select>
@@ -110,88 +152,18 @@ button{background:var(--accent);color:#fff;border:none;padding:10px;margin-top:1
         <input id="eventLoc" placeholder="Location">
         <input id="eventResult" placeholder="Result (Leave empty for upcoming)">
         <div style="margin-top:10px;">
-            <label><input type="checkbox" id="eventBannerToggle" class="inline-check"> <strong>Show on Banner immediately?</strong></label>
+            <label><input type="checkbox" id="eventBannerToggle"> <strong>Show on Banner?</strong></label>
         </div>
         <button onclick="addEvent()">Add Event</button>
       </div>
     </div>
   </section>
 
-  <section id="news" class="active">
-    <div class="card">
-      <h2>Team News</h2>
-      <div id="newsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:15px;"></div>
-      <div class="admin-only admin-input-group">
-        <h3>Post News</h3>
-        <input id="newsTitle" placeholder="Title">
-        <textarea id="newsContent" placeholder="Content"></textarea>
-        <button onclick="saveNews()">Publish News</button>
-      </div>
-    </div>
-  </section>
+  <section id="news" class="active"><div class="card"><h2>Team News</h2><div id="newsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:15px;"></div><div class="admin-only admin-input-group"><h3>Post News</h3><input id="newsTitle" placeholder="Title"><textarea id="newsContent" placeholder="Content"></textarea><button onclick="saveNews()">Publish News</button></div></div></section>
+  <section id="league"><div class="card"><h2>League Standings</h2><table><thead><tr><th>Team</th><th>GP</th><th>W</th><th>L</th><th>T</th><th>PTS</th><th>GF</th><th>GA</th><th>PIM</th><th>Face %</th><th>Shots</th><th>L10</th><th>Strk</th><th>Last Game</th><th class="admin-only">Actions</th></tr></thead><tbody id="leagueBody"></tbody></table><div class="admin-only admin-input-group"><input id="leagueInput" placeholder="Team | GP | W | L | T | PTS | GF | GA | PIM | Face% | Shots | L10 | Strk | Last Game"><button onclick="saveGeneric('league', 'leagueInput')">Add Team</button></div></div></section>
+  <section id="record"><div class="card"><h2>Season Record</h2><div style="text-align:center; font-size:40px; font-weight:900; color:var(--accent);" id="recordDisplay">0-0-0</div><table><thead><tr><th>Phase</th><th>W-L-T</th><th class="admin-only">Actions</th></tr></thead><tbody id="recordBody"></tbody></table><div class="admin-only admin-input-group"><input id="recordInput" placeholder="Season Phase | W-L-T"><button onclick="saveGeneric('record', 'recordInput')">Update Record</button></div></div></section>
+  <section id="admin"><div class="card"><h2>Admin Login</h2><input id="user" placeholder="Username"><input id="pass" type="password" placeholder="Password"><button onclick="login()">Login</button></div></section>
 
-  <section id="roster">
-    <div class="card">
-      <h2>Player Roster</h2>
-      <h3>Forwards</h3>
-      <table><thead><tr><th>Name</th><th>#</th><th>G</th><th>A</th><th>P</th><th class="admin-only">Actions</th></tr></thead><tbody id="roster-forward"></tbody></table>
-      <h3>Defense</h3>
-      <table><thead><tr><th>Name</th><th>#</th><th>G</th><th>A</th><th>P</th><th class="admin-only">Actions</th></tr></thead><tbody id="roster-defense"></tbody></table>
-      <h3>Goalies</h3>
-      <table><thead><tr><th>Name</th><th>#</th><th>G</th><th>A</th><th>P</th><th class="admin-only">Actions</th></tr></thead><tbody id="roster-goalie"></tbody></table>
-      <div class="admin-only admin-input-group">
-        <input id="pName" placeholder="Name">
-        <input id="pNum" placeholder="Number">
-        <select id="pPos">
-            <option value="forward">Forward</option>
-            <option value="defense">Defense</option>
-            <option value="goalie">Goalie</option>
-        </select>
-        <input id="pStats" placeholder="G | A | P">
-        <button onclick="addPlayer()">Add Player</button>
-      </div>
-    </div>
-  </section>
-
-  <section id="league">
-    <div class="card">
-      <h2>League Standings</h2>
-      <table>
-        <thead>
-          <tr><th>Team</th><th>GP</th><th>W</th><th>L</th><th>T</th><th>PTS</th><th>GF</th><th>GA</th><th>PIM</th><th>Face %</th><th>Shots</th><th>L10</th><th>Strk</th><th>Last Game</th><th class="admin-only">Actions</th></tr>
-        </thead>
-        <tbody id="leagueBody"></tbody>
-      </table>
-      <div class="admin-only admin-input-group">
-        <input id="leagueInput" placeholder="Team | GP | W | L | T | PTS | GF | GA | PIM | Face% | Shots | L10 | Strk | Last Game">
-        <button onclick="saveGeneric('league', 'leagueInput')">Add Team</button>
-      </div>
-    </div>
-  </section>
-
-  <section id="record">
-    <div class="card">
-        <h2>Season Record</h2>
-        <div style="text-align:center; font-size:40px; font-weight:900; color:var(--accent);" id="recordDisplay">0-0-0</div>
-        <table>
-          <thead><tr><th>Phase</th><th>W-L-T</th><th class="admin-only">Actions</th></tr></thead>
-          <tbody id="recordBody"></tbody>
-        </table>
-        <div class="admin-only admin-input-group">
-          <input id="recordInput" placeholder="Season Phase | W-L-T">
-          <button onclick="saveGeneric('record', 'recordInput')">Update Record</button>
-        </div>
-      </div>
-  </section>
-
-  <section id="admin">
-    <div class="card">
-      <h2>Admin Login</h2>
-      <input id="user" placeholder="Username">
-      <input id="pass" type="password" placeholder="Password">
-      <button onclick="login()">Login</button>
-    </div>
-  </section>
 </main>
 
 <script type="module">
@@ -216,82 +188,47 @@ window.login = () => {
 
 window.logout = () => { isAdmin = false; location.reload(); };
 
-// --- RENDERING ---
+// --- SPECIAL ROSTER LOGIC ---
+window.toggleStatPlaceholder = () => {
+    const pos = document.getElementById('pPos').value;
+    const statsInput = document.getElementById('pStats');
+    if(pos === 'goalie') {
+        statsInput.placeholder = "W-L-OTL | GAA | SV%";
+    } else {
+        statsInput.placeholder = "Goals | Assists | Points";
+    }
+};
 
-function renderSchedule() {
-  onValue(ref(db, "schedule"), snap => {
-    const body = document.getElementById("scheduleBody");
-    body.innerHTML = "";
-    const banner = document.getElementById("bannerText");
-    let bannerItems = [];
+function renderRoster() {
+  onValue(ref(db, "roster"), snap => {
+    ["forward", "defense", "goalie"].forEach(pos => document.getElementById(`roster-${pos}`).innerHTML = "");
     const data = snap.val() || {};
-
     Object.keys(data).forEach(id => {
-      const parts = data[id].split("|").map(p => p.trim());
-      const type = parts[0];
-      const showOnBanner = parts[5] === "true";
-      const isUpcoming = !parts[4] || parts[4].toLowerCase() === "tbd";
-
+      const p = data[id].split("|").map(x => x.trim()); 
       const tr = document.createElement("tr");
-      tr.id = `schedule-${id}`;
-      let rowHtml = "";
-      for(let i=0; i<5; i++) rowHtml += `<td>${parts[i]}</td>`;
-      rowHtml += `<td style="color:${showOnBanner ? 'lime':'#555'}">${showOnBanner ? 'ON BANNER' : 'HIDDEN'}</td>`;
-      tr.innerHTML = rowHtml;
-
-      if(isUpcoming && showOnBanner) {
-          let icon = type === "Tournament" ? "🏆" : "🏒";
-          bannerItems.push(`${icon} ${type.toUpperCase()}: ${parts[1]} - ${parts[2]} (${parts[3]})`);
-      }
-
+      tr.id = `roster-${id}`;
+      // Data format: Name|Num|Pos|Stat1|Stat2|Stat3
+      tr.innerHTML = `<td>${p[0]}</td><td>${p[1]}</td><td>${p[3]}</td><td>${p[4]}</td><td>${p[5]}</td>`;
       if(isAdmin) {
         const td = document.createElement("td");
-        td.innerHTML = `<button class="btn-sm" onclick="initScheduleEdit('${id}','${data[id]}')">Edit/Toggle</button>
-                        <button class="btn-sm" style="background:red" onclick="deleteItem('schedule','${id}')">X</button>`;
+        td.innerHTML = `<button class="btn-sm" onclick="initEdit('roster','${id}','${data[id]}')">Edit</button>
+                        <button class="btn-sm" style="background:red" onclick="deleteItem('roster','${id}')">X</button>`;
         tr.appendChild(td);
       }
-      body.appendChild(tr);
+      const target = document.getElementById(`roster-${p[2]}`);
+      if(target) target.appendChild(tr);
     });
-    banner.innerText = bannerItems.join(" | ") || "No upcoming featured events.";
   });
 }
 
-// Special Edit Handler for Schedule
-window.initScheduleEdit = (id, val) => {
-    const p = val.split("|").map(x => x.trim());
-    const tr = document.getElementById(`schedule-${id}`);
-    tr.innerHTML = `
-      <td colspan="100%">
-        <div class="edit-box">
-          <select id="edType-${id}"><option ${p[0]=='Game'?'selected':''}>Game</option><option ${p[0]=='Tournament'?'selected':''}>Tournament</option><option ${p[0]=='Practice'?'selected':''}>Practice</option></select>
-          <input id="edDate-${id}" value="${p[1]}" placeholder="Date">
-          <input id="edDet-${id}" value="${p[2]}" placeholder="Details">
-          <input id="edLoc-${id}" value="${p[3]}" placeholder="Location">
-          <input id="edRes-${id}" value="${p[4]}" placeholder="Result">
-          <label><input type="checkbox" id="edBan-${id}" ${p[5]=='true'?'checked':''}> Show on Banner</label><br>
-          <button class="btn-sm" style="background:green" onclick="saveScheduleEdit('${id}')">Save Changes</button>
-          <button class="btn-sm" onclick="renderSchedule()">Cancel</button>
-        </div>
-      </td>`;
-};
-
-window.saveScheduleEdit = (id) => {
-    const banner = document.getElementById(`edBan-${id}`).checked ? "true" : "false";
-    const str = `${document.getElementById(`edType-${id}`).value}|${document.getElementById(`edDate-${id}`).value}|${document.getElementById(`edDet-${id}`).value}|${document.getElementById(`edLoc-${id}`).value}|${document.getElementById(`edRes-${id}`).value}|${banner}`;
-    set(ref(db, "schedule/"+id), str);
-};
-
-// --- GENERAL RENDERING ---
-
+// --- COACHING & GENERAL TABLES ---
 function renderTable(key, bodyId) {
   onValue(ref(db, key), snap => {
     const body = document.getElementById(bodyId);
     if(!body) return;
     body.innerHTML = "";
     const data = snap.val() || {};
-    let keys = Object.keys(data);
-    if(key === "league") keys.sort((a, b) => (parseInt(data[b].split("|")[5]) || 0) - (parseInt(data[a].split("|")[5]) || 0));
-    keys.forEach(id => {
+    Object.keys(data).forEach(id => {
       const parts = data[id].split("|").map(p => p.trim());
       const tr = document.createElement("tr");
       tr.id = `${key}-${id}`;
@@ -308,62 +245,87 @@ function renderTable(key, bodyId) {
   });
 }
 
-function renderRoster() {
-  onValue(ref(db, "roster"), snap => {
-    ["forward", "defense", "goalie"].forEach(pos => document.getElementById(`roster-${pos}`).innerHTML = "");
+// --- SCHEDULE ---
+function renderSchedule() {
+  onValue(ref(db, "schedule"), snap => {
+    const body = document.getElementById("scheduleBody");
+    body.innerHTML = "";
+    const banner = document.getElementById("bannerText");
+    let bannerItems = [];
     const data = snap.val() || {};
+
     Object.keys(data).forEach(id => {
-      const p = data[id].split("|").map(x => x.trim()); 
+      const parts = data[id].split("|").map(p => p.trim());
+      const type = parts[0];
+      const showOnBanner = parts[5] === "true";
+      const isUpcoming = !parts[4] || parts[4].toLowerCase() === "tbd" || parts[4] === "";
+
       const tr = document.createElement("tr");
-      tr.id = `roster-${id}`;
-      tr.innerHTML = `<td>${p[0]}</td><td>${p[1]}</td><td>${p[3]}</td><td>${p[4]}</td><td>${p[5]}</td>`;
+      tr.id = `schedule-${id}`;
+      if(type === 'Playoff Game') tr.className = "row-playoff";
+      
+      let rowHtml = "";
+      for(let i=0; i<5; i++) rowHtml += `<td>${parts[i]}</td>`;
+      rowHtml += `<td style="color:${showOnBanner ? 'lime':'#555'}">${showOnBanner ? 'ON BANNER' : 'HIDDEN'}</td>`;
+      tr.innerHTML = rowHtml;
+
+      if(isUpcoming && showOnBanner) {
+          let icon = type === "Tournament" ? "🏆" : (type === "Playoff Game" ? "🚨" : "🏒");
+          bannerItems.push(`${icon} ${type.toUpperCase()}: ${parts[1]} - ${parts[2]} (${parts[3]})`);
+      }
+
       if(isAdmin) {
         const td = document.createElement("td");
-        td.innerHTML = `<button class="btn-sm" onclick="initEdit('roster','${id}','${data[id]}')">Edit</button>
-                        <button class="btn-sm" style="background:red" onclick="deleteItem('roster','${id}')">X</button>`;
+        td.innerHTML = `<button class="btn-sm" onclick="initScheduleEdit('${id}','${data[id]}')">Edit</button>
+                        <button class="btn-sm" style="background:red" onclick="deleteItem('schedule','${id}')">X</button>`;
         tr.appendChild(td);
       }
-      const target = document.getElementById(`roster-${p[2]}`);
-      if(target) target.appendChild(tr);
+      body.appendChild(tr);
     });
+    banner.innerText = bannerItems.join(" | ") || "No upcoming featured events.";
   });
 }
 
-function renderNews() {
-  onValue(ref(db, "news"), snap => {
-    const grid = document.getElementById("newsGrid");
-    grid.innerHTML = "";
-    const data = snap.val() || {};
-    Object.keys(data).forEach(id => {
-      const parts = data[id].split("|");
-      const div = document.createElement("div");
-      div.style = "background:#222; padding:15px; border-radius:8px; border-top:3px solid var(--accent);";
-      div.id = `news-${id}`;
-      div.innerHTML = `<h4>${parts[0]}</h4><p>${parts[1]}</p>`;
-      if(isAdmin) div.innerHTML += `<button class="btn-sm" onclick="initEdit('news','${id}','${data[id]}')">Edit</button>
-                                    <button class="btn-sm" style="background:red" onclick="deleteItem('news','${id}')">X</button>`;
-      grid.appendChild(div);
-    });
-  });
-}
+window.initScheduleEdit = (id, val) => {
+    const p = val.split("|").map(x => x.trim());
+    const tr = document.getElementById(`schedule-${id}`);
+    tr.innerHTML = `<td colspan="100%"><div class="edit-box">
+          <select id="edType-${id}"><option ${p[0]=='Game'?'selected':''}>Game</option><option ${p[0]=='Playoff Game'?'selected':''}>Playoff Game</option><option ${p[0]=='Tournament'?'selected':''}>Tournament</option><option ${p[0]=='Practice'?'selected':''}>Practice</option></select>
+          <input id="edDate-${id}" value="${p[1]}"> <input id="edDet-${id}" value="${p[2]}"> <input id="edLoc-${id}" value="${p[3]}"> <input id="edRes-${id}" value="${p[4]}">
+          <label><input type="checkbox" id="edBan-${id}" ${p[5]=='true'?'checked':''}> Show on Banner</label><br>
+          <button class="btn-sm" style="background:green" onclick="saveScheduleEdit('${id}')">Save</button><button class="btn-sm" onclick="renderSchedule()">Cancel</button>
+        </div></td>`;
+};
+
+window.saveScheduleEdit = (id) => {
+    const banner = document.getElementById(`edBan-${id}`).checked ? "true" : "false";
+    const str = `${document.getElementById(`edType-${id}`).value}|${document.getElementById(`edDate-${id}`).value}|${document.getElementById(`edDet-${id}`).value}|${document.getElementById(`edLoc-${id}`).value}|${document.getElementById(`edRes-${id}`).value}|${banner}`;
+    set(ref(db, "schedule/"+id), str);
+};
 
 // --- ACTIONS ---
 window.addEvent = () => {
     const bannerVal = document.getElementById("eventBannerToggle").checked ? "true" : "false";
-    const eventString = `${eventType.value}|${eventDate.value}|${eventDetail.value}|${eventLoc.value}|${eventResult.value}|${bannerVal}`;
-    set(ref(db, "schedule/" + Date.now()), eventString);
+    const str = `${eventType.value}|${eventDate.value}|${eventDetail.value}|${eventLoc.value}|${eventResult.value}|${bannerVal}`;
+    set(ref(db, "schedule/" + Date.now()), str);
     eventDate.value=""; eventDetail.value=""; eventLoc.value=""; eventResult.value="";
-    document.getElementById("eventBannerToggle").checked = false;
-};
-
-window.saveGeneric = (key, inputId) => {
-    set(ref(db, key + "/" + Date.now()), document.getElementById(inputId).value);
-    document.getElementById(inputId).value = "";
 };
 
 window.addPlayer = () => {
     set(ref(db, "roster/" + Date.now()), `${pName.value}|${pNum.value}|${pPos.value}|${pStats.value}`);
     pName.value=""; pNum.value=""; pStats.value="";
+};
+
+window.saveGeneric = (key, inputIds, isMulti = false) => {
+    let val = "";
+    if(isMulti) {
+        val = inputIds.split("|").map(id => document.getElementById(id).value).join("|");
+        inputIds.split("|").forEach(id => document.getElementById(id).value = "");
+    } else {
+        val = document.getElementById(inputIds).value;
+        document.getElementById(inputIds).value = "";
+    }
+    set(ref(db, key + "/" + Date.now()), val);
 };
 
 window.saveNews = () => {
@@ -382,9 +344,27 @@ window.initEdit = (key, id, currentVal) => {
 
 window.finishEdit = (key, id) => set(ref(db, key+"/"+id), document.getElementById(`edit-${id}`).value);
 
+function renderNews() {
+  onValue(ref(db, "news"), snap => {
+    const grid = document.getElementById("newsGrid");
+    grid.innerHTML = "";
+    const data = snap.val() || {};
+    Object.keys(data).forEach(id => {
+      const parts = data[id].split("|");
+      const div = document.createElement("div");
+      div.style = "background:#222; padding:15px; border-radius:8px; border-top:3px solid var(--accent);";
+      div.id = `news-${id}`;
+      div.innerHTML = `<h4>${parts[0]}</h4><p>${parts[1]}</p>`;
+      if(isAdmin) div.innerHTML += `<button class="btn-sm" onclick="initEdit('news','${id}','${data[id]}')">Edit</button><button class="btn-sm" style="background:red" onclick="deleteItem('news','${id}')">X</button>`;
+      grid.appendChild(div);
+    });
+  });
+}
+
 function renderAll() {
   renderNews(); renderRoster(); renderSchedule();
   renderTable("league", "leagueBody"); renderTable("record", "recordBody");
+  renderTable("coaches", "coachBody");
 }
 renderAll();
 </script>
